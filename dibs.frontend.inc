@@ -356,7 +356,10 @@ function dibs_frontend_dibs_callback_ok($transaction) {
         $transaction = dibs_transaction_load($transaction['tid']);
 
         // Invoking the module that implemented the payment
-        module_invoke($transaction['api_module'], 'dibsapi', 'transaction_callback', $transaction['api_delta'], $transaction);
+        $function = $transaction['api_module'].'_dibsapi';
+        if (function_exists($function)) {
+          $function('transaction_callback', $transaction['api_delta'], $transaction);
+        }
       }
     }
   }
