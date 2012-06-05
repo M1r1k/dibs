@@ -82,7 +82,11 @@ function dibs_schema() {
         'description' => t('Order price info. Serialized'),
       ),
       'payment_time' => array(
-        'type' => 'datetime',
+        'type' => 'datetime', // empty 'type' generates PHP notice
+        // 'mysql_type', 'pgsql_type', 'sqlite_type', etc.: If you need to use a record type not included in the officially supported list of types above, you can specify a type for each database backend. In this case, you can leave out the type parameter, but be advised that your schema will fail to load on backends that do not have a type specified.
+        // jfr. http://api.drupal.org/api/drupal/includes--database--schema.inc/group/schemaapi/7
+        'mysql_type' => 'datetime',
+        'pgsql_type' => 'timestamp',
         'description' => t('Payment time'),
         'not null' => FALSE,
       ),
@@ -228,7 +232,11 @@ function dibs_schema() {
         'description' => t('Log value. Used in combination with subtype.'),
       ),
       'time' => array(
-        'type' => 'datetime',
+        'type' => 'datetime', // empty 'type' generates PHP notice
+        // 'mysql_type', 'pgsql_type', 'sqlite_type', etc.: If you need to use a record type not included in the officially supported list of types above, you can specify a type for each database backend. In this case, you can leave out the type parameter, but be advised that your schema will fail to load on backends that do not have a type specified.
+        // jfr. http://api.drupal.org/api/drupal/includes--database--schema.inc/group/schemaapi/7
+        'mysql_type' => 'datetime',
+        'pgsql_type' => 'timestamp',
         'description' => t('Log time'),
         'not null' => FALSE,
       ),
