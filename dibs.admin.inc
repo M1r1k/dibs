@@ -30,7 +30,7 @@ function dibs_admin_settings_list() {
 
     $rows = array();
     // Looping through deltas for a specific module implementation of hook_dibsapi)).
-    foreach ((array)module_invoke($module, 'dibsapi') as $delta => $info) {
+    foreach ((array) dibs_invoke($module, 'info') as $delta => $info) {
       $row = array(
         array('data' => $info['info'], 'class' => ''),
         array('data' => l(t('edit'), 'admin/settings/dibs/edit/' . $module . '/' . $delta), 'class' => ''),
@@ -56,7 +56,7 @@ function dibs_admin_settings_list() {
  */
 function dibs_admin_settings_form($form_state = array(), $module = NULL, $delta = NULL) {
   // Checking if the module and delta exists
-  $info = module_invoke($module, 'dibsapi', 'info', $delta);
+  $info = dibs_invoke($module, 'info', $delta);
   if (empty($info) || !is_array($info)) {
     drupal_not_found();
     exit;
@@ -349,7 +349,7 @@ function dibs_admin_settings_form_validate($form, &$form_state) {
   $delta  = $form_state['values']['delta'];
 
   // Checking if the module and delta exists
-  $info = module_invoke($module, 'dibsapi', 'info', $delta);
+  $info = dibs_invoke($module, 'info', $delta);
   if (empty($info) || !is_array($info) || empty($module) || empty($delta)) {
     drupal_not_found();
     exit;
@@ -401,7 +401,7 @@ function dibs_admin_settings_form_submit($form, &$form_state) {
   $advanced       = $form_state['values']['advanced'];
 
   // Checking if the module and delta exists
-  $info = module_invoke($module, 'dibsapi', 'info', $delta);
+  $info = dibs_invoke($module, 'info', $delta);
   if (empty($info) || !is_array($info) || empty($module) || empty($delta)) {
     drupal_not_found();
     exit;

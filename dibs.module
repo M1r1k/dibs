@@ -184,6 +184,38 @@ function dibs_dibsapi($op = 'info', $delta = NULL, &$transaction = NULL, $a3 = N
 }
 
 /**
+ * Invoke hook_dibsapi on a specific module.
+ *
+ * Since we need to pass some arguments by reference, this override
+ * is necessary - module_invoke can't pass by reference in PHP 5.3.
+ *
+ * @param string $module
+ *   Name of the module to invoke hook_dibsapi on.
+ * @param string $op
+ *   Operation to ask the implementation to perform.
+ * @param mixed $delta
+ *   Delta - for implementing modules that have multiple
+ *   implementations, these may be named/numbered by delta.
+ * @param mixed $transaction
+ *   The DIBS transaction data, if applicable. Passed by reference, so
+ *   modules can alter it.
+ * @param mixed $a3
+ *   Polymorpic parameter 1. TODO: Document me.
+ * @param mixed $a4
+ *   Polymorpic parameter 2. TODO: Document me.
+ *
+ * @return mixed
+ *   The return value of the invoked hook.
+ */
+function dibs_invoke($module, $op, $delta = NULL, &$transaction = NULL, $a3 = NULL, $a4 = NULL) {
+  $implementation = $module . '_dibsapi';
+
+  if (function_exists($implementation)) {
+    return $implementation($op, $delta, $transaction, $a3, $a4);
+  }
+}
+
+/**
  * Checking if a certain module and delta are the default one.
  *
  * @param stirng $module
@@ -378,7 +410,7 @@ function dibs_payment_prepare($data, $redirect = TRUE) {
 
   // Checking required data in $data array
   if (!empty($data['api_module']) && !empty($data['api_delta'])) {
-    $info = module_invoke($data['api_module'], 'dibsapi', 'info', $data['api_delta']);
+    $info = dibs_invoke($data['api_module'], 'info', $data['api_delta']);
     if (empty($info) || !is_array($info)) {
       drupal_set_message(t('Error preparing the payment: api_module and/or api_delta is not valid!'), 'error');
       return '';

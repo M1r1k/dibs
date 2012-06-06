@@ -16,7 +16,7 @@ function dibs_frontend_redirect_page($transaction) {
 
   // Making some checks to check if the transaction is valid
   if (!empty($transaction['api_module']) && !empty($transaction['api_delta'])) {
-    $info = module_invoke($transaction['api_module'], 'dibsapi', 'info', $transaction['api_delta']);
+    $info = dibs_invoke($transaction['api_module'], 'info', $transaction['api_delta']);
     if (empty($info) || !is_array($info)) {
       drupal_set_message(t('Error redirecting to DIBS: api_module and/or api_delta is not valid!'), 'error');
       return '';
@@ -243,9 +243,9 @@ function dibs_frontend_redirect_form($form_state = array(), $settings, $data) {
 function dibs_frontend_cancel_page($transaction) {
   $transaction['payment_price'] = (float)$transaction['payment_price'];
 
-  // Making some checks to check if the transaction is valid
+  // Making some checks to check if the transaction is valid.
   if (!empty($transaction['api_module']) && !empty($transaction['api_delta'])) {
-    $info = module_invoke($transaction['api_module'], 'dibsapi', 'info', $transaction['api_delta']);
+    $info = dibs_invoke($transaction['api_module'], 'info', $transaction['api_delta']);
     if (empty($info) || !is_array($info)) {
       drupal_set_message(t('Error redirecting to DIBS: api_module and/or api_delta is not valid!'), 'error');
       return '';
@@ -261,7 +261,7 @@ function dibs_frontend_cancel_page($transaction) {
   }
 
   // Invoking the module that implemented the payment
-  module_invoke($transaction['api_module'], 'dibsapi', 'transaction_cancel', $transaction['api_delta'], $transaction);
+  dibs_invoke($transaction['api_module'], 'transaction_cancel', $transaction['api_delta'], $transaction);
 
   // Loading settings
   $settings = dibs_load_settings($transaction['api_module'], $transaction['api_delta']);
@@ -356,10 +356,7 @@ function dibs_frontend_dibs_callback_ok($transaction) {
         $transaction = dibs_transaction_load($transaction['tid']);
 
         // Invoking the module that implemented the payment
-        $function = $transaction['api_module'].'_dibsapi';
-        if (function_exists($function)) {
-          $function('transaction_callback', $transaction['api_delta'], $transaction);
-        }
+        dibs_invoke($transaction['api_module'], 'transaction_callback', $transaction['api_delta'], $transaction);
       }
     }
   }
@@ -386,7 +383,7 @@ function dibs_frontend_accept_page($transaction) {
   unset($_SESSION['dibs']);
 
   // Invoking the module that implemented the payment
-  module_invoke($transaction['api_module'], 'dibsapi', 'transaction_accept', $transaction['api_delta'], $transaction);
+  dibs_invoke($transaction['api_module'], 'transaction_accept', $transaction['api_delta'], $transaction);
 
   // Loading settings
   $settings = dibs_load_settings($transaction['api_module'], $transaction['api_delta']);
