@@ -1,12 +1,16 @@
 <?php
+/**
+ * @file
+ * Module Drupal API module for the DIBS payment service provider.
+ */
 
 /**
  * Defining some constants
  */
 // The default module and delta. Settings from these are used as fall back
-// if settings are missing for another implementation
+// if settings are missing for another implementation.
 define('DIBS_DEFAULT_MODULE', 'dibs');
-define('DIBS_DEFAULT_DELTA',  'default');
+define('DIBS_DEFAULT_DELTA', 'default');
 
 /**
  * @file
@@ -14,32 +18,24 @@ define('DIBS_DEFAULT_DELTA',  'default');
  */
 
 /**
- * Implementation of hook_init().
+ * Implements hook_init().
  */
 function dibs_init() {
-  // Disabling cache on DIBS pages
+  // Disabling cache on DIBS pages.
   if (arg(0) == 'payment' && arg(1) == 'dibs') {
     $GLOBALS['conf']['cache'] = FALSE;
   }
 }
 
 /**
- * Implementation of hook_help().
- */
-function dibs_help($path, $arg) {
-  switch ($path) {
-  }
-}
-
-/**
- * Implementation of hook_perm().
+ * Implements hook_perm().
  */
 function dibs_perm() {
   return array('pay using dibs', 'administer dibs settings', 'administer dibs transactions');
 }
 
 /**
- * Implementation of hook_theme().
+ * Implements hook_theme().
  */
 function dibs_theme() {
   $themes = array();
@@ -62,12 +58,12 @@ function dibs_theme() {
 }
 
 /**
- * Implementation of hook_menu().
+ * Implements hook_menu().
  */
 function dibs_menu() {
   $items = array();
 
-  // Settings pages
+  // Settings pages.
   $items['admin/settings/dibs'] = array(
     'page callback' => 'dibs_admin_settings_list',
     'title' => 'DIBS settings',
@@ -157,7 +153,7 @@ function dibs_menu() {
  */
 function dibs_admin_user_access() {
   $args = func_get_args();
-  foreach ((array)$args[0] as $perm) {
+  foreach ((array) $args[0] as $perm) {
     if (user_access($perm)) {
       return TRUE;
     }
@@ -165,9 +161,10 @@ function dibs_admin_user_access() {
 }
 
 /**
- * Implementation of hook_dibsapi().
+ * Implements hook_dibsapi().
  *
- * The settings for option "default" will be used as fall back for other implementations.
+ * The settings for option "default" will be used as fall back for other
+ * implementations.
  */
 function dibs_dibsapi($op = 'info', $delta = NULL, &$transaction = NULL, $a3 = NULL, $a4 = NULL) {
   switch ($op) {
@@ -252,46 +249,48 @@ function dibs_get_settings_value($module, $delta, $group, $key, $default_value =
 }
 
 /**
- * Gets the next order ID for a certain module / delta and depending on the arguments
- * will the record in the table dibs_order_id_settings bed updated.
+ * Gets the next order ID for a certain module / delta.
+ *
+ * And, depending on the arguments, the record in the table
+ * dibs_order_id_settings will be updated.
  *
  * @param string $module
  * @param string $delta
  * @param bool $update_table
- * - Should the record in the table dibs_order_id_settings be updated?
+ *   Should the record in the table dibs_order_id_settings be updated?
  * @param bool $add_prefix_suffix
- * - Should the prefix and suffix be added to the returned string
+ *   Should the prefix and suffix be added to the returned string
  * @param bool $fallback
- * - Should we fallback to the default setting if no settings exists?
+ *   Should we fallback to the default setting if no settings exists?
  *
- * @return multi
+ * @return mixed
  */
 function dibs_get_next_order_id($module, $delta, $update_table = TRUE, $add_prefix_suffix = TRUE, $fallback = TRUE) {
   db_lock_table('dibs_order_id_settings');
   $settings = db_fetch_array(db_query("SELECT * FROM {dibs_order_id_settings} WHERE api_module = '%s' AND api_delta = '%s'", $module, $delta));
   if (empty($settings) && $fallback) {
-    // Unlocking tables
+    // Unlocking tables.
     db_unlock_tables();
 
-    // We try to get the data from the default setting instead
+    // We try to get the data from the default setting instead.
     return dibs_get_next_order_id(DIBS_DEFAULT_MODULE, DIBS_DEFAULT_DELTA, $update_table, $add_prefix_suffix, FALSE);
   }
   elseif (is_array($settings)) {
     $next_order_id = $settings['order_id'] + 1;
 
-    // Updating value in table
+    // Updating value in table.
     if ($update_table) {
       db_query("UPDATE {dibs_order_id_settings} SET order_id = %d WHERE api_module = '%s' AND api_delta = '%s'", $next_order_id, $module, $delta);
     }
 
-    // Unlocking tables
+    // Unlocking tables.
     db_unlock_tables();
 
-    // Returns the found value
+    // Returns the found value.
     return $add_prefix_suffix ? $settings['order_id_prefix'] . $next_order_id . $settings['order_id_suffix'] : $next_order_id;
   }
   else {
-    // Unlocking tables
+    // Unlocking tables.
     db_unlock_tables();
 
     return NULL;
@@ -304,7 +303,7 @@ function dibs_get_next_order_id($module, $delta, $update_table = TRUE, $add_pref
  * @param string $module
  * @param string $delta
  * @param bool $fallback
- *  - If TRUE will we try to merge the settings array with the default one.
+ *   If TRUE will we try to merge the settings array with the default one.
  */
 function dibs_load_settings($module, $delta, $fallback = TRUE) {
   $settings = (array) variable_get('dibs_settings_' . $module . '_' . $delta, array());
@@ -333,10 +332,10 @@ function dibs_load_settings($module, $delta, $fallback = TRUE) {
   else {
     $return = $settings;
 
-    // Loading order id settings
+    // Loading order id settings.
     $orderid = db_fetch_array(db_query("SELECT * FROM {dibs_order_id_settings} WHERE api_module = '%s' AND api_delta = '%s'", $module, $delta));
 
-    // Mergning arrays and returns them
+    // Merge arrays and return them.
     return array_merge($return, array('orderid' => $orderid));
   }
 }
@@ -350,8 +349,8 @@ function dibs_load_settings($module, $delta, $fallback = TRUE) {
  *   Is either tid or hash.
  *
  * @return
- *   A fully-loaded $stransaction array upon successful transaction load or FALSE if transaction
- *   cannot be loaded.
+ *   A fully-loaded $stransaction array upon successful transaction load
+ *   or FALSE if transaction cannot be loaded.
  */
 function dibs_transaction_load($key = NULL, $op = 'tid') {
   if ($op == 'tid' && is_numeric($key)) {
@@ -398,7 +397,7 @@ function dibs_transaction_hash_load($key = NULL) {
  *
  * @param array $data
  * @param bool $redirect
- * - If set to FALSE will the function not automatically
+ *   If set to FALSE will the function not automatically
  *   redirect the user to the DIBS form.
  *
  * @return
@@ -408,7 +407,7 @@ function dibs_transaction_hash_load($key = NULL) {
 function dibs_payment_prepare($data, $redirect = TRUE) {
   global $user;
 
-  // Checking required data in $data array
+  // Checking required data in $data array.
   if (!empty($data['api_module']) && strlen($data['api_delta'])) {
     $info = dibs_invoke($data['api_module'], 'info', $data['api_delta']);
     if (empty($info) || !is_array($info)) {
@@ -426,19 +425,19 @@ function dibs_payment_prepare($data, $redirect = TRUE) {
     return '';
   }
 
-  // DIBS transaction data
+  // DIBS transaction data.
   $hash = isset($_SESSION['dibs'][$data['api_module']][$data['api_delta']]['hash']) ? $_SESSION['dibs'][$data['api_module']][$data['api_delta']]['hash'] : NULL;
   if (!empty($hash) && is_string($hash)) {
     // We are forcing the system to use a new transaction id for every load of this page,
-    // therefore are we deleting the old transaction record
+    // therefore are we deleting the old transaction record.
     db_query("DELETE FROM {dibs_transactions} WHERE payment_status < 1 AND api_hash = '%s'", $hash);
     $hash = NULL;
   }
 
-  // Getting DIBS settings
+  // Getting DIBS settings.
   $settings = dibs_load_settings($data['api_module'], $data['api_delta']);
 
-  // Adding default data to data array if some things missing
+  // Adding default data to data array if some things missing.
   $data += array(
     'payment_transaction_type' => 'normal',
     'order_info_short' => '',
@@ -456,13 +455,13 @@ function dibs_payment_prepare($data, $redirect = TRUE) {
     'params' => array(),
   );
 
-  // Generating order id
+  // Generating order id.
   $order_id = is_numeric($data['payment_order_id']) ? $data['payment_order_id'] : dibs_get_next_order_id($data['api_module'], $data['api_delta']);
 
-  // Creating new api_hash
+  // Creating new api_hash.
   $hash = sha1(time() . $order_id . drupal_get_private_key());
 
-  // Creating dibs transaction
+  // Creating dibs transaction.
   $transaction = array(
     'api_module' => $data['api_module'],
     'api_delta' => $data['api_delta'],
@@ -495,12 +494,12 @@ function dibs_payment_prepare($data, $redirect = TRUE) {
     ), WATCHDOG_ERROR);
   }
 
-  // Saving new api_hash in session
+  // Saving new api_hash in session.
   $_SESSION['dibs'][$data['api_module']][$data['api_delta']]['hash'] = $hash;
 
-  // Redirecting to the payment redirect page
+  // Redirecting to the payment redirect page.
   if ($redirect) {
-    drupal_goto('payment/dibs/redirect/'.$hash);
+    drupal_goto('payment/dibs/redirect/' . $hash);
     exit;
   }
 
@@ -537,7 +536,7 @@ function dibs_create_order_line_fields($data) {
       );
       $form['ordlinesy'] = array(
         '#type' => 'hidden',
-        '#value' => $j-1,
+        '#value' => $j - 1,
       );
     }
   }
@@ -562,7 +561,7 @@ function dibs_create_price_line_fields($data) {
       $keys[] = $field;
       $form[$field] = array(
         '#type' => 'hidden',
-        '#value' => $value
+        '#value' => $value,
       );
       $i++;
     }
@@ -594,7 +593,7 @@ function dibs_create_delivery_line_fields($data) {
         $keys[] = $field;
         $form[$field] = array(
           '#type' => 'hidden',
-          '#value' => $value
+          '#value' => $value,
         );
         $i++;
       }

@@ -14,7 +14,7 @@
 function dibs_frontend_redirect_page($transaction) {
   $transaction['payment_price'] = (float) $transaction['payment_price'];
 
-  // Making some checks to check if the transaction is valid
+  // Making some checks to check if the transaction is valid.
   if (!empty($transaction['api_module']) && strlen($transaction['api_delta'])) {
     $info = dibs_invoke($transaction['api_module'], 'info', $transaction['api_delta']);
     if (empty($info) || !is_array($info)) {
@@ -31,7 +31,7 @@ function dibs_frontend_redirect_page($transaction) {
     return '';
   }
 
-  // Loading settings
+  // Loading settings.
   $settings = dibs_load_settings($transaction['api_module'], $transaction['api_delta']);
 
   if (empty($settings)) {
@@ -39,7 +39,7 @@ function dibs_frontend_redirect_page($transaction) {
     return t('Redirect could not be performed due to missing configuration settings.');
   }
 
-  // Getting redirect form
+  // Getting redirect form.
   $form = drupal_get_form('dibs_frontend_redirect_form', $settings, $transaction);
 
   // We are forcing the accept-charset to be ISO-8859-1, else will the order and delivery
@@ -49,7 +49,7 @@ function dibs_frontend_redirect_page($transaction) {
     $form = str_replace('accept-charset="UTF-8"', 'accept-charset="ISO-8859-1"', $form);
   }
 
-  // Adding autosubmit javascript
+  // Adding autosubmit javascript.
   drupal_add_js("
     if (Drupal.jsEnabled) {
       $(document).ready($('#dibs-frontend-redirect-form').submit());
@@ -69,13 +69,13 @@ function dibs_frontend_redirect_page($transaction) {
  *
  * @return array
  */
-function dibs_frontend_redirect_form($form_state = array(), $settings, $data) {
+function dibs_frontend_redirect_form($form_state, $settings, $data) {
   if ($data['payment_retry_count']) {
     $data['payment_order_id'] .= '-' . $data['payment_retry_count'];
   }
 
-  // Creating form fields
-  // Required fields
+  // Creating form fields.
+  // Required fields.
   $form['merchant'] = array(
     '#type' => 'hidden',
     '#value' => $settings['general']['merchant'],
@@ -125,7 +125,7 @@ function dibs_frontend_redirect_form($form_state = array(), $settings, $data) {
     '#value' => $data['api_delta'],
   );
 
-  // Optional fields
+  // Optional fields.
   if (!empty($settings['general']['test_mode'])) {
     $form['test'] = array(
       '#type' => 'hidden',
@@ -158,7 +158,7 @@ function dibs_frontend_redirect_form($form_state = array(), $settings, $data) {
     );
   }
 
-  // Payment Window fields
+  // Payment Window fields.
   if ($settings['general']['type'] == 'pay') {
     if (!empty($settings['paymentwindow']['color'])) {
       $form['color'] = array(
@@ -168,7 +168,7 @@ function dibs_frontend_redirect_form($form_state = array(), $settings, $data) {
     }
     $form['#action'] = 'https://payment.architrade.com/payment/start.pml';
   }
-  // Flex Window fields
+  // Flex Window fields.
   elseif ($settings['general']['type'] == 'flex') {
     if (!empty($settings['flexwindow']['color'])) {
       $form['color'] = array(
@@ -205,7 +205,7 @@ function dibs_frontend_redirect_form($form_state = array(), $settings, $data) {
     $order_lines = dibs_create_order_line_fields($data['order_info_long']);
     $form = array_merge($form, $order_lines);
   }
-  else if (!empty($data['order_info_short'])) {
+  elseif (!empty($data['order_info_short'])) {
     $form['ordertext'] = array(
       '#type' => 'hidden',
       '#value' => $data['order_info_short'],
@@ -216,15 +216,15 @@ function dibs_frontend_redirect_form($form_state = array(), $settings, $data) {
     $form = array_merge($form, $price_lines);
   }
 
-  // Delivery line fields
+  // Delivery line fields.
   $delivery_lines = dibs_create_delivery_line_fields($data);
   $form = array_merge($form, $delivery_lines);
 
-  // Additional form fields
+  // Additional form fields.
   $form['submit'] = array('#type' => 'submit', '#value' => t('Continue to DIBS payment'));
 
   // Executing the hook_dibsapi_form_alter
-  $func = $data['api_module'] .'_dibsapi_form_alter';
+  $func = $data['api_module'] . '_dibsapi_form_alter';
   if (function_exists($func)) {
     $func($form, $data['api_delta']);
   }
@@ -241,7 +241,7 @@ function dibs_frontend_redirect_form($form_state = array(), $settings, $data) {
  * @return string
  */
 function dibs_frontend_cancel_page($transaction) {
-  $transaction['payment_price'] = (float)$transaction['payment_price'];
+  $transaction['payment_price'] = (float) $transaction['payment_price'];
 
   // Making some checks to check if the transaction is valid.
   if (!empty($transaction['api_module']) && strlen($transaction['api_delta'])) {
@@ -260,13 +260,13 @@ function dibs_frontend_cancel_page($transaction) {
     return '';
   }
 
-  // Invoking the module that implemented the payment
+  // Invoking the module that implemented the payment.
   dibs_invoke($transaction['api_module'], 'transaction_cancel', $transaction['api_delta'], $transaction);
 
-  // Loading settings
+  // Loading settings.
   $settings = dibs_load_settings($transaction['api_module'], $transaction['api_delta']);
 
-  // Getting redirect form
+  // Getting redirect form.
   $form = drupal_get_form('dibs_frontend_cancel_form', $settings, $transaction);
 
   return theme('dibs_cancel_page', $form, $settings, $transaction);
@@ -284,7 +284,7 @@ function dibs_frontend_cancel_page($transaction) {
  * @ingroup forms
  * @see dibs_frontend_cancel_form_submit()
  */
-function dibs_frontend_cancel_form($form_state = array(), $settings, $data) {
+function dibs_frontend_cancel_form($form_state, $settings, $data) {
   $form['hash'] = array('#type' => 'value', '#value' => $data['api_hash']);
   $form['submit'] = array('#type' => 'submit', '#value' => t('Return to DIBS payment'));
   return $form;
@@ -302,28 +302,29 @@ function dibs_frontend_cancel_form($form_state = array(), $settings, $data) {
 function dibs_frontend_cancel_form_submit($form, &$form_state) {
   $hash = $form_state['values']['hash'];
 
-  // Loading the transaction
+  // Loading the transaction.
   $data = dibs_load_transaction($hash, 'hash');
   $settings = dibs_load_settings($data['api_module'], $data['api_delta'], TRUE);
 
-  // Make changes to order id if dictated by retry policy
+  // Make changes to order id if dictated by retry policy.
   $retry = isset($settings['general']['retry_handling']) ? $settings['general']['retry_handling'] : 'new_order_id';
   switch ($retry) {
     case 'new_order_id':
-      // Generating order id
+      // Generating order id.
       $order_id = dibs_get_next_order_id($data['api_module'], $data['api_delta']);
-      // Updating transaction
+      // Updating transaction.
       db_query("UPDATE {dibs_transactions} SET payment_order_id = '%s' WHERE api_hash = '%s'", $order_id, $hash);
       break;
+
     case 'add_retry_suffix':
       $suffixed = array(
         'api_hash' => $hash,
-        'payment_retry_count' => $data['payment_retry_count']+1,
+        'payment_retry_count' => $data['payment_retry_count'] + 1,
       );
       drupal_write_record('dibs_transactions', $suffixed, array('api_hash'));
   }
 
-  // Redirecting to the payment redirect page
+  // Redirecting to the payment redirect page.
   drupal_goto('payment/dibs/redirect/' . $hash);
 
   exit;
@@ -341,9 +342,9 @@ function dibs_frontend_dibs_callback_ok($transaction) {
     $paytype = isset($_REQUEST['paytype']) ? $_REQUEST['paytype'] : '';
     if (!empty($transaction)) {
       $settings = dibs_load_settings($transaction['api_module'], $transaction['api_delta']);
-      $md5_key = md5($settings['general']['md5_key2'] . md5($settings['general']['md5_key1'] . 'transact='. $transact .'&amount='. ($data['payment_price'] * 100) .'&currency='. $settings['general']['currency']));
+      $md5_key = md5($settings['general']['md5_key2'] . md5($settings['general']['md5_key1'] . 'transact=' . $transact . '&amount=' . ($data['payment_price'] * 100) . '&currency=' . $settings['general']['currency']));
       if ($md5_key == $authkey || empty($settings['md5'])) {
-        // Updating transaction record with payment transaction id
+        // Updating transaction record with payment transaction id.
         $updated = db_query("UPDATE {dibs_transactions} SET payment_transaction_id = %d, payment_status = 1, payment_type = '%s' WHERE tid = %d", $transact, $paytype, $transaction['tid']);
 
         if ($updated) {
@@ -355,7 +356,7 @@ function dibs_frontend_dibs_callback_ok($transaction) {
         // Reload the transaction.
         $transaction = dibs_transaction_load($transaction['tid']);
 
-        // Invoking the module that implemented the payment
+        // Invoking the module that implemented the payment.
         dibs_invoke($transaction['api_module'], 'transaction_callback', $transaction['api_delta'], $transaction);
       }
     }
@@ -373,22 +374,21 @@ function dibs_frontend_dibs_callback_ok($transaction) {
  * @param array $transaction
  */
 function dibs_frontend_accept_page($transaction) {
-  // Returning an error if the transaction is emtpy
+  // Returning an error if the transaction is empty.
   if (empty($transaction)) {
     drupal_set_message(t('An error occured. The transaction key is not valid!'), 'error');
     return '';
   }
 
-  // Unsetting the temporary session
+  // Unsetting the temporary session.
   unset($_SESSION['dibs']);
 
-  // Invoking the module that implemented the payment
+  // Invoking the module that implemented the payment.
   dibs_invoke($transaction['api_module'], 'transaction_accept', $transaction['api_delta'], $transaction);
 
-  // Loading settings
+  // Loading settings.
   $settings = dibs_load_settings($transaction['api_module'], $transaction['api_delta']);
 
-  // Returning the themed output
+  // Returning the themed output.
   return theme('dibs_accept_page', $settings, $transaction);
 }
-
