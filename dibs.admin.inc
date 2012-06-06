@@ -350,7 +350,7 @@ function dibs_admin_settings_form_validate($form, &$form_state) {
 
   // Checking if the module and delta exists
   $info = dibs_invoke($module, 'info', $delta);
-  if (empty($info) || !is_array($info) || empty($module) || empty($delta)) {
+  if (empty($info) || !is_array($info) || empty($module) || !strlen($delta)) {
     drupal_not_found();
     exit;
   }
@@ -402,7 +402,7 @@ function dibs_admin_settings_form_submit($form, &$form_state) {
 
   // Checking if the module and delta exists
   $info = dibs_invoke($module, 'info', $delta);
-  if (empty($info) || !is_array($info) || empty($module) || empty($delta)) {
+  if (empty($info) || !is_array($info) || empty($module) || !strlen($delta)) {
     drupal_not_found();
     exit;
   }

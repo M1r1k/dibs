@@ -15,14 +15,14 @@ function dibs_frontend_redirect_page($transaction) {
   $transaction['payment_price'] = (float) $transaction['payment_price'];
 
   // Making some checks to check if the transaction is valid
-  if (!empty($transaction['api_module']) && !empty($transaction['api_delta'])) {
+  if (!empty($transaction['api_module']) && strlen($transaction['api_delta'])) {
     $info = dibs_invoke($transaction['api_module'], 'info', $transaction['api_delta']);
     if (empty($info) || !is_array($info)) {
       drupal_set_message(t('Error redirecting to DIBS: api_module and/or api_delta is not valid!'), 'error');
       return '';
     }
   }
-  elseif (!empty($transaction['api_module']) || !empty($transaction['api_delta'])) {
+  elseif (empty($transaction['api_module']) || !strlen($transaction['api_delta'])) {
     drupal_set_message(t('Error redirecting to DIBS: api_module or api_delta is missing!'), 'error');
     return '';
   }
@@ -244,14 +244,14 @@ function dibs_frontend_cancel_page($transaction) {
   $transaction['payment_price'] = (float)$transaction['payment_price'];
 
   // Making some checks to check if the transaction is valid.
-  if (!empty($transaction['api_module']) && !empty($transaction['api_delta'])) {
+  if (!empty($transaction['api_module']) && strlen($transaction['api_delta'])) {
     $info = dibs_invoke($transaction['api_module'], 'info', $transaction['api_delta']);
     if (empty($info) || !is_array($info)) {
       drupal_set_message(t('Error redirecting to DIBS: api_module and/or api_delta is not valid!'), 'error');
       return '';
     }
   }
-  elseif (!empty($transaction['api_module']) || !empty($transaction['api_delta'])) {
+  elseif (empty($transaction['api_module']) || !strlen($transaction['api_delta'])) {
     drupal_set_message(t('Error redirecting to DIBS: api_module or api_delta is missing!'), 'error');
     return '';
   }

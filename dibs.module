@@ -173,7 +173,7 @@ function dibs_dibsapi($op = 'info', $delta = NULL, &$transaction = NULL, $a3 = N
   switch ($op) {
     case 'info':
       $info['default'] = array('info' => t('Default'));
-      if (!empty($delta)) {
+      if (strlen($delta)) {
         return isset($info[$delta]) ? $info[$delta] : NULL;
       }
       else {
@@ -409,14 +409,14 @@ function dibs_payment_prepare($data, $redirect = TRUE) {
   global $user;
 
   // Checking required data in $data array
-  if (!empty($data['api_module']) && !empty($data['api_delta'])) {
+  if (!empty($data['api_module']) && strlen($data['api_delta'])) {
     $info = dibs_invoke($data['api_module'], 'info', $data['api_delta']);
     if (empty($info) || !is_array($info)) {
       drupal_set_message(t('Error preparing the payment: api_module and/or api_delta is not valid!'), 'error');
       return '';
     }
   }
-  elseif (!empty($data['api_module']) || !empty($data['api_delta'])) {
+  elseif (empty($data['api_module']) || !strlen($data['api_delta'])) {
     drupal_set_message(t('Error preparing the payment: api_module or api_delta is missing!'), 'error');
     return '';
   }
