@@ -53,6 +53,7 @@ function include the following:
                               'Vat' => '33.78',
                              ),
     'customer_name'       => 'Firstname Lastname',
+    'params'              => array('x' => 'X', 'y' => 'Y', 'z' => 'Z'),
   );
   
   // Prepare the DIBS payment  
@@ -61,7 +62,11 @@ function include the following:
 The dibs_payment_prepare() function creates the transaction record, 
 creating the hash etc. and redirects to the payment redirect page. 
 Note that the order_info_long array is not required, if it is included
-should it be an array like above - the array are used to procude a kind
+should it be an array like above - the array are used to produce a kind
 of table therefore is the first part of the array the column titles. 
 The order_price_info should also be an array, but again can it be 
 skipped.
+
+To disable the internal calculation of payment_price subunit using factor 100, 
+set params['disable_subunit_calc'] = TRUE. This disables the calculation and 
+your payment_price should therefore be provided in the lowest subunit.

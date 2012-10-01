@@ -73,6 +73,8 @@ function dibs_frontend_redirect_form($form_state, $settings, $data) {
   if ($data['payment_retry_count']) {
     $data['payment_order_id'] .= '-' . $data['payment_retry_count'];
   }
+  
+  $subunit = !empty($data['params']['disable_subunit_calc']) ? 1 : 100;  
 
   // Creating form fields.
   // Required fields.
@@ -82,7 +84,7 @@ function dibs_frontend_redirect_form($form_state, $settings, $data) {
   );
   $form['amount'] = array(
     '#type' => 'hidden',
-    '#value' => $data['payment_price'] * 100,
+    '#value' => $data['payment_price'] * $subunit,
   );
   $form['currency'] = array(
     '#type' => 'hidden',
