@@ -33,7 +33,6 @@ function commerce_dibs_rules_action_info() {
  */
 function commerce_dibs_capture_order($order) {
   $commerce_transactions = commerce_payment_transaction_load_multiple(FALSE, array('order_id' => $order->order_id));
-  $status = TRUE;
   foreach ($commerce_transactions as $commerce_transaction) {
     // Only try to capture payments that are auth'ed and have a dibs id.
     if (
@@ -41,13 +40,10 @@ function commerce_dibs_capture_order($order) {
         $commerce_transaction->status == COMMERCE_CREDIT_AUTH_ONLY &&
         !empty($commerce_transaction->payload['dibs_id'])
     ) {
-      $capture = dibs_capture_transaction('commerce_dibs', 'commerce_dibs', $commerce_transaction->payload['dibs_id']);
-      if ($capture['status']) {
+      $status = dibs_capture_transaction('commerce_dibs', 'commerce_dibs', $commerce_transaction->payload['dibs_id']);
+      if ($status['status']) {
         $commerce_transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
         commerce_payment_transaction_save($commerce_transaction);
-      }
-      else {
-        $status = FALSE;
       }
     }
   }
