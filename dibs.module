@@ -753,22 +753,69 @@ function dibs_capture_transaction($api_module, $api_delta, $transaction) {
     ), WATCHDOG_INFO);
   }
   elseif (strpos($response->data, 'status=DECLINED') !== FALSE) {
+    foreach (explode('&', $response->data) as $code) {
+      if (strpos($code, 'result=') !== FALSE) {
+        $error_code = trim($code, 'result=');
+        if (!empty($error_code)) {
+          $error_code = (int) $error_code;
+        }
+      }
+    }
     $result['status'] = FALSE;
     $result['code'] = 'Declined';
     $result['data'] = $response->data;
-    watchdog('dibs', "DIBS declined to capture payment with transaction id @transaction response: @response." , array(
-      '@transaction' => $transaction,
-      '@response' => $response->data,
-    ), WATCHDOG_CRITICAL);
+    $error_codes = dibs_error_codes();
+    if (!empty($error_codes[$error_code])) {
+      $result['error_code'] = $error_codes[$error_code];
+      watchdog('dibs', "DIBS declined to capture payment with transaction id @transaction error_code: @error_code." , array(
+        '@transaction' => $transaction,
+        '@error_code' => $result['error_code'],
+      ), WATCHDOG_CRITICAL);
+    }
+    else {
+      watchdog('dibs', "Unknown error when trying to capture DIBS payment with transaction id @transaction response: @response." , array(
+        '@transaction' => $transaction,
+        '@response' => $response->data,
+      ), WATCHDOG_CRITICAL);
+      $result['error_code'] = 'Unknown';
+    }
   }
   else {
     $result['status'] = FALSE;
     $result['code'] = 'Unknown';
     $result['data'] = $response->data;
+    $result['error_code'] = 'Unknown';
     watchdog('dibs', "Unknown error when trying to capture DIBS payment with transaction id @transaction response: @response." , array(
       '@transaction' => $transaction,
       '@response' => $response->data,
     ), WATCHDOG_CRITICAL);
   }
   return $result;
+}
+
+function dibs_error_codes($type = 'capture') {
+  $codes = array(
+    'capture' => array(
+      0 => 'Accepted',
+      1 => 'No response from acquirer',
+      2 => 'Timeout',
+      3 => 'Credit card expired',
+      4 => 'Rejected by acquirer',
+      5 => 'Authorisation older than7 days',
+      6 => 'Transaction status on the DIBS server does not allow capture',
+      7 => 'Amount too high',
+      8 => 'Error in the parameters sent to the DIBS server. An additional parameter called "message" is returned, with a value that may help identifying the error',
+      9 => 'Order number (orderid) does not correspond to the authorisation order number',
+      10 => 'Re-authorisation of the transaction was rejected',
+      11 => 'Not able to communicate with the acquier',
+      12 => 'Confirm request error',
+      14 => 'Capture is called for a transaction which is pending for batch - i.e. capture was already called',
+      15 => 'Capture was blocked by DIBS',
+    ),
+  );
+
+  if (!empty($codes[$type])) {
+    return $codes[$type];
+  }
+  return array();
 }
