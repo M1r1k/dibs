@@ -82,27 +82,6 @@ function dibs_menu() {
     'file' => 'dibs.admin.inc',
   );
 
-  // Transaction pages
-  /*
-  $items['admin/reports/dibs-transactions'] = array(
-    'page callback' => 'dibs_admin_transactions_list',
-    'title' => 'DIBS transactions',
-    'description' => 'View DIBS payment transactions',
-    'weight' => 2,
-    'type' => MENU_NORMAL_ITEM,
-    'access arguments' => array('administer dibs transactions'),
-    'file' => 'dibs.admin.inc',
-  );
-  $items['admin/reports/dibs-transactions/view/%'] = array(
-    'page callback' => 'dibs_admin_transactions_view',
-    'page arguments' => array(4),
-    'title' => 'View transaction',
-    'type' => MENU_CALLBACK,
-    'access arguments' => array('administer dibs transactions'),
-    'file' => 'dibs.admin.inc',
-  );
-  */
-
   // Front end pages
   $items['payment/dibs/callbackok/%dibs_transaction_hash'] = array(
     'title' => 'DIBS callback ok url',
@@ -604,6 +583,103 @@ function dibs_create_delivery_line_fields($data) {
     );
   }
   return $form;
+}
+
+/**
+ * Generate the MAC string.
+ * 
+ * @param array $form_values
+ * @param string $hmac_hex_key 
+ * 
+ * @return string
+ */
+function dibs_generate_mac($form_values, $hmac_hex) {
+  $mac = '';
+  
+  if (is_array($form_values)) {
+    ksort($form_values);
+
+    // Accepted keys
+    $keys = array(
+      'acceptReturnUrl', 
+      'amount', 
+      'callbackUrl', 
+      'cancelReturnUrl', 
+      'currency',
+      'language',
+      'merchant',
+      'orderId',
+      'test'
+    );
+  
+    // Creating key=value string
+    $key_value_string = '';
+    foreach ($keys as $key) {
+      if (isset($form_values[$key])) {
+        if (is_array($form_values[$key])) {
+          $value = $form_values[$key]['#value'];
+        }
+        else {
+          $value = $form_values[$key];
+        }
+        if (!empty($value)) {
+          if (strlen($key_value_string) > 0) {
+            $key_value_string .= '&';
+          }
+          $key_value_string .= $key . '=' . (string)$value;
+        }
+      }
+    }
+    
+    // Converts $hmac_string from a hex representation to a string representation.
+    $hmac_string = "";
+    foreach (explode("\n", trim(chunk_split($hmac_hex, 2))) as $h) {
+      $hmac_string .= chr(hexdec($h));
+    }    
+    
+    // Generate the MAC string.
+    $mac = hash_hmac("sha256", $key_value_string, $hmac_string);   
+  }
+  
+  return $mac;
+}
+
+/**
+ * Generate the MAC string for the automated callback after payment.
+ * 
+ * @param array $form_values
+ * @param string $hmac_hex_key 
+ * 
+ * @return string
+ */
+function dibs_generate_mac_callback($form_values, $hmac_hex) {
+  $mac = '';
+  
+  if (is_array($form_values)) {
+    ksort($form_values);
+
+    // Creating key=value string
+    $key_value_string = '';
+    foreach ($form_values as $key => $value) {
+      if ( $key != 'MAC' && !empty($value)) {
+        if (strlen($key_value_string) > 0) {
+          $key_value_string .= '&';
+        }
+        $key_value_string .= $key . '=' . (string)$value;
+      }
+    }
+    
+    // Converts $hmac_string from a hex representation to a string representation.
+    $hmac_string = "";
+    foreach (explode("\n", trim(chunk_split($hmac_hex, 2))) as $h) {
+      $hmac_string .= chr(hexdec($h));
+    }    
+    
+    // Generate the MAC string.
+    $mac = hash_hmac("sha256", $key_value_string, $hmac_string);
+  }
+  
+  return $mac;
 }
 
 /**

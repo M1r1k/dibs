@@ -2,7 +2,7 @@
 DESCRIPTION
 =====================
                 
-DIBS is the biggest payment gateway provider in Scandinavia.
+DIBS is the largest payment gateway provider in Scandinavia.
 
 This module makes it possible for other modules to integrate and 
 receive payments through DIBS Internet, see 
@@ -10,10 +10,20 @@ http://www.dibspayment.com/products/dibs-internet/.
 
 The module it self does not "out-of-box" make it possible to receive
 payments, but it offers an API so other modules easily can integrate
-to DIBS via the PaymentWindow or FlexWindow. 
+to DIBS via the Payment Window or Flex Window. 
 
 The DIBS API is not supported, and support is not planned.
 
+Find more info about the two supported window types on:
+
+Payment Window: 
+http://tech.dibspayment.com/integration_methods/dibs_payment_window/
+
+Flex Window: 
+http://tech.dibspayment.com/integration_methods/flexwin/
+
+The old deprecated PayWin is no longer supported. It has been replaced by the
+new flexible responsive Payment Window.
 
 INSTALLATION
 =====================

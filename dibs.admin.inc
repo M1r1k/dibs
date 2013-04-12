@@ -110,9 +110,9 @@ function dibs_admin_settings_form($form_state = array(), $module = NULL, $delta 
     '#type' => 'select',
     '#title' => t('Window type'),
     '#required' => $default,
-    '#options' => array('' => '', 'pay' => t('Pay window'), 'flex' => t('Flex window')),
+    '#options' => array('' => '', 'pay' => t('Payment Window'), 'flex' => t('Flex Window')),
     '#default_value' => dibs_get_settings_value($module, $delta, 'general', 'type', ($default ? 1 : '')),
-    '#description' => t('If enabled, DIBS will make some extra checks on the sended data, to be sure that no one manipulated it. If enabled should the keys below be filled in!'),
+    '#description' => t('Choose the type of DIBS window used for payment. Notice that Payment Window is the new responsive version with theme editor, not the old deprecated "Pay Window".'),
   );
   $form['general']['retry_handling'] = array(
     '#type' => 'select',
@@ -120,29 +120,6 @@ function dibs_admin_settings_form($form_state = array(), $module = NULL, $delta 
     '#options' => array('' => '', 'new_order_id' => t('Generate a new order id'), 'add_retry_suffix' => t('Add retry suffix'), 'unchanged' => t('Preserve order id')),
     '#default_value' => dibs_get_settings_value($module, $delta, 'general', 'retry_handling', ($default ? 'new_order_id' : '')),
     '#description' => t('How the order id should be handled when the user retries a cancelled payment. Some card providers (edankort) require a new order ID after cancellation.'),
-  );
-  $form['general']['md5'] = array(
-    '#type' => 'select',
-    '#title' => t('Perform MD5 control'),
-    '#options' => array('' => '', 0 => t('No'), 1 => t('Yes')),
-    '#default_value' => dibs_get_settings_value($module, $delta, 'general', 'md5', ($default ? 1 : '')),
-    '#description' => t('If enabled, DIBS will make some extra checks on the sended data, to be sure that no one manipulated it. If enabled should the keys below be filled in!'),
-  );
-  $form['general']['md5_key1'] = array(
-    '#type' => 'textfield',
-    '#title' => t('MD5 key 1'),
-    '#maxlength' => 64,
-    '#required' => FALSE,
-    '#default_value' => dibs_get_settings_value($module, $delta, 'general', 'md5_key1', ''),
-    '#description' => t('MD5 key 1 - used if "Perform MD5 control" is enabled.'),
-  );
-  $form['general']['md5_key2'] = array(
-    '#type' => 'textfield',
-    '#title' => t('MD5 key 2'),
-    '#maxlength' => 64,
-    '#required' => FALSE,
-    '#default_value' => dibs_get_settings_value($module, $delta, 'general', 'md5_key2', ''),
-    '#description' => t('MD5 key 2 - used if "Perform MD5 control" is enabled.'),
   );
   $form['general']['lang'] = array(
     '#type' => 'select',
@@ -190,28 +167,6 @@ function dibs_admin_settings_form($form_state = array(), $module = NULL, $delta 
     '#description' => t('Currency code for the currency used when paying.'),
   );
 
-  // Payment window.
-  $form['paymentwindow'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Payment Window settings'),
-    '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-    '#tree' => TRUE,
-  );
-  $form['paymentwindow']['color'] = array(
-    '#type' => 'select',
-    '#title' => t('Color theme'),
-    '#options' => array(
-      '' => '',
-      'sand' => t('Sand'),
-      'grey' => t('Grey'),
-      'blue' => t('Blue'),
-    ),
-    '#required' => FALSE,
-    '#default_value' => dibs_get_settings_value($module, $delta, 'paymentwindow', 'color', ''),
-    '#description' => t('The color theme for the DIBS popup window.'),
-  );
-
   // Flex window.
   $form['flexwindow'] = array(
     '#type' => 'fieldset',
@@ -219,6 +174,29 @@ function dibs_admin_settings_form($form_state = array(), $module = NULL, $delta 
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
     '#tree' => TRUE,
+  );
+  $form['flexwindow']['md5'] = array(
+    '#type' => 'select',
+    '#title' => t('Perform MD5 control (Only used with Flex Window)'),
+    '#options' => array('' => '', 0 => t('No'), 1 => t('Yes')),
+    '#default_value' => dibs_get_settings_value($module, $delta, 'flexwindow', 'md5', ''),
+    '#description' => t('If enabled, DIBS will make some extra checks on the sended data, to be sure that no one manipulated it. If enabled should the keys below be filled in!'),
+  );
+  $form['flexwindow']['md5_key1'] = array(
+    '#type' => 'textfield',
+    '#title' => t('MD5 key 1'),
+    '#maxlength' => 64,
+    '#required' => FALSE,
+    '#default_value' => dibs_get_settings_value($module, $delta, 'flexwindow', 'md5_key1', ''),
+    '#description' => t('MD5 key 1 - used if "Perform MD5 control" is enabled.'),
+  );
+  $form['flexwindow']['md5_key2'] = array(
+    '#type' => 'textfield',
+    '#title' => t('MD5 key 2'),
+    '#maxlength' => 64,
+    '#required' => FALSE,
+    '#default_value' => dibs_get_settings_value($module, $delta, 'flexwindow', 'md5_key2', ''),
+    '#description' => t('MD5 key 2 - used if "Perform MD5 control" is enabled.'),
   );
   $form['flexwindow']['color'] = array(
     '#type' => 'select',
@@ -258,6 +236,29 @@ function dibs_admin_settings_form($form_state = array(), $module = NULL, $delta 
     '#required' => FALSE,
     '#default_value' => dibs_get_settings_value($module, $delta, 'flexwindow', 'voucher', ''),
     '#description' => t('If set to Yes, then the list of payment types on the first page of FlexWin will contain vouchers, too.'),
+  );
+  
+ // Payment window.
+  $form['paymentwindow'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Payment Window settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#tree' => TRUE,
+  );
+  $form['paymentwindow']['hmac'] = array(
+    '#type' => 'select',
+    '#title' => t('Perform HMAC control (Only used with Payment Window)'),
+    '#options' => array('' => '', 0 => t('No'), 1 => t('Yes')),
+    '#default_value' => dibs_get_settings_value($module, $delta, 'paymentwindow', 'hmac', ''),
+    '#description' => t('If enabled, DIBS will make some extra checks on the sended data, to be sure that no one manipulated it. If enabled should the keys below be filled in!'),
+  );
+  $form['paymentwindow']['hmac_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('HMAC key'),
+    '#required' => FALSE,
+    '#default_value' => dibs_get_settings_value($module, $delta, 'paymentwindow', 'hmac_key', ''),
+    '#description' => t('HMAC key - used if "Perform HMAC control" is enabled.'),
   );
 
   // Order ID.
@@ -364,12 +365,19 @@ function dibs_admin_settings_form_validate($form, &$form_state) {
   $default = dibs_is_default($module, $delta);
 
   // Checking if keys are filled in when MD5 check is enabled.
-  if ($form_state['values']['general']['md5'] == 1) {
-    if (empty($form_state['values']['general']['md5_key1'])) {
-      form_set_error('general][md5_key1', t('Please, fill in the missing key, or disable "Perform MD5 control". The MD5 keys can be found in the DIBS administration.'));
+  if ($form_state['values']['flexwindow']['md5'] == 1) {
+    if (empty($form_state['values']['flexwindow']['md5_key1'])) {
+      form_set_error('flexwindow][md5_key1', t('Please, fill in the missing key, or disable "Perform MD5 control". The MD5 keys can be found in the DIBS administration.'));
     }
-    if (empty($form_state['values']['general']['md5_key2'])) {
-      form_set_error('general][md5_key2', t('Please, fill in the missing key, or disable "Perform MD5 control". The MD5 keys can be found in the DIBS administration.'));
+    if (empty($form_state['values']['flexwindow']['md5_key2'])) {
+      form_set_error('flexwindow][md5_key2', t('Please, fill in the missing key, or disable "Perform MD5 control". The MD5 keys can be found in the DIBS administration.'));
+    }
+  }
+  
+  // Checking if keys are filled in when HMAC check is enabled.
+  if ($form_state['values']['paymentwindow']['hmac'] == 1) {
+    if (empty($form_state['values']['paymentwindow']['hmac_key'])) {
+      form_set_error('paymentwindow][hmac_key', t('Please, fill in the missing key, or disable "Perform HMAC control". The HMAC keys can be found in the DIBS administration.'));
     }
   }
 

@@ -42,13 +42,6 @@ function dibs_frontend_redirect_page($transaction) {
   // Getting redirect form.
   $form = drupal_get_form('dibs_frontend_redirect_form', $settings, $transaction);
 
-  // We are forcing the accept-charset to be ISO-8859-1, else will the order and delivery
-  // info sent to DIBS be shown with wrong characters in the payment window and in their
-  // administration system.
-  if ($settings['general']['type'] == 'pay') {
-    $form = str_replace('accept-charset="UTF-8"', 'accept-charset="ISO-8859-1"', $form);
-  }
-
   // Adding autosubmit javascript.
   drupal_add_js("
     if (Drupal.jsEnabled) {
@@ -114,10 +107,6 @@ function dibs_frontend_redirect_form($form_state, $settings, $data) {
     '#type' => 'hidden',
     '#value' => url('payment/dibs/callbackok/' . $data['api_hash'], array('absolute' => TRUE)),
   );
-  $form['windowtype'] = array(
-    '#type' => 'hidden',
-    '#value' => $settings['general']['type'],
-  );
   $form['api_module'] = array(
     '#type' => 'hidden',
     '#value' => $data['api_module'],
@@ -152,26 +141,59 @@ function dibs_frontend_redirect_form($form_state, $settings, $data) {
       '#value' => 1,
     );
   }
-  if (!empty($settings['general']['md5'])) {
-    $md5_key = md5($settings['general']['md5_key2'] . md5($settings['general']['md5_key1'] . 'merchant=' . $settings['general']['merchant'] . '&orderid=' . $data['payment_order_id'] . '&currency=' . $settings['general']['currency'] . '&amount=' . $data['payment_price'] * 100));
-    $form['md5key'] = array(
+  
+  // Order and payment info fields
+  // If order_info_long contains data are we not sending order_info_short to DIBS.
+  // The reason for this is a bug in the DIBS administration. If both are sent,
+  // will only the short version show up in the administration.
+  if (!empty($data['order_info_long']) && is_array($data['order_info_long'])) {
+    $order_lines = dibs_create_order_line_fields($data['order_info_long']);
+    $form = array_merge($form, $order_lines);
+  }
+  elseif (!empty($data['order_info_short'])) {
+    $form['ordertext'] = array(
       '#type' => 'hidden',
-      '#value' => $md5_key,
+      '#value' => $data['order_info_short'],
     );
   }
+  if (!empty($data['order_price_info']) && is_array($data['order_price_info'])) {
+    $price_lines = dibs_create_price_line_fields($data['order_price_info']);
+    $form = array_merge($form, $price_lines);
+  }
+
+  // Delivery line fields.
+  $delivery_lines = dibs_create_delivery_line_fields($data);
+  $form = array_merge($form, $delivery_lines);  
 
   // Payment Window fields.
   if ($settings['general']['type'] == 'pay') {
-    if (!empty($settings['paymentwindow']['color'])) {
-      $form['color'] = array(
+    // Changing parameters with new names.
+    $form['orderId'] = $form['orderid'];
+    $form['acceptReturnUrl'] = $form['accepturl'];
+    $form['cancelReturnUrl'] = $form['cancelurl'];
+    $form['callbackUrl'] = $form['callbackurl'];
+    $form['addFee'] = $form['calcfee'];
+    $form['language'] = $form['lang'];
+    unset($form['orderid'], $form['accepturl'], $form['cancelurl'], $form['callbackurl'], $form['calcfee'], $form['lang']);
+    
+    if (!empty($settings['paymentwindow']['hmac'])) {
+      $form['MAC'] = array(
         '#type' => 'hidden',
-        '#value' => $settings['paymentwindow']['color'],
+        '#value' => dibs_generate_mac($form, $settings['paymentwindow']['hmac_key']),
       );
-    }
-    $form['#action'] = 'https://payment.architrade.com/payment/start.pml';
+    }    
+    
+    $form['#action'] = 'https://sat1.dibspayment.com/dibspaymentwindow/entrypoint';
   }
   // Flex Window fields.
   elseif ($settings['general']['type'] == 'flex') {
+    if (!empty($settings['flexwindow']['md5'])) {
+      $md5_key = md5($settings['flexwindow']['md5_key2'] . md5($settings['flexwindow']['md5_key1'] . 'merchant=' . $settings['general']['merchant'] . '&orderid=' . $data['payment_order_id'] . '&currency=' . $settings['general']['currency'] . '&amount=' . $data['payment_price'] * 100));
+      $form['md5key'] = array(
+        '#type' => 'hidden',
+        '#value' => $md5_key,
+      );
+    }
     if (!empty($settings['flexwindow']['color'])) {
       $form['color'] = array(
         '#type' => 'hidden',
@@ -198,30 +220,7 @@ function dibs_frontend_redirect_form($form_state, $settings, $data) {
     }
     $form['#action'] = 'https://payment.architrade.com/paymentweb/start.action';
   }
-
-  // Order and payment info fields
-  // If order_info_long contains data are we not sending order_info_short to DIBS.
-  // The reason for this is a bug in the DIBS administration. If both are sent,
-  // will only the short version show up in the administration.
-  if (!empty($data['order_info_long']) && is_array($data['order_info_long'])) {
-    $order_lines = dibs_create_order_line_fields($data['order_info_long']);
-    $form = array_merge($form, $order_lines);
-  }
-  elseif (!empty($data['order_info_short'])) {
-    $form['ordertext'] = array(
-      '#type' => 'hidden',
-      '#value' => $data['order_info_short'],
-    );
-  }
-  if (!empty($data['order_price_info']) && is_array($data['order_price_info'])) {
-    $price_lines = dibs_create_price_line_fields($data['order_price_info']);
-    $form = array_merge($form, $price_lines);
-  }
-
-  // Delivery line fields.
-  $delivery_lines = dibs_create_delivery_line_fields($data);
-  $form = array_merge($form, $delivery_lines);
-
+  
   // Additional form fields.
   $form['submit'] = array('#type' => 'submit', '#value' => t('Continue to DIBS payment'));
 
@@ -338,35 +337,73 @@ function dibs_frontend_cancel_form_submit($form, &$form_state) {
  * @param array $transaction
  */
 function dibs_frontend_dibs_callback_ok($transaction) {
-  if (isset($_REQUEST['transact'])) {
-    $transact = $_REQUEST['transact'];
-    $authkey = isset($_REQUEST['authkey']) ? $_REQUEST['authkey'] : '';
-    $paytype = isset($_REQUEST['paytype']) ? $_REQUEST['paytype'] : '';
-    if (!empty($transaction)) {
-      $settings = dibs_load_settings($transaction['api_module'], $transaction['api_delta']);
-      $md5_key = md5($settings['general']['md5_key2'] . md5($settings['general']['md5_key1'] . 'transact=' . $transact . '&amount=' . ($data['payment_price'] * 100) . '&currency=' . $settings['general']['currency']));
-      if ($md5_key == $authkey || empty($settings['md5'])) {
-        // Updating transaction record with payment transaction id.
-        $updated = db_query("UPDATE {dibs_transactions} SET payment_transaction_id = %d, payment_status = 1, payment_type = '%s' WHERE tid = %d", $transact, $paytype, $transaction['tid']);
+  if (!empty($transaction)) {
+    $settings = dibs_load_settings($transaction['api_module'], $transaction['api_delta']);  
 
-        if ($updated) {
-          watchdog('dibs', 'Transaction #@tid validated as OK.', array(
-            '@tid' => $transaction['tid'],
-          ), WATCHDOG_INFO);
+    // Payment Window callback
+    if ($settings['general']['type'] == 'pay') {
+      if (isset($_REQUEST['transaction'])) {
+        $transact = $_REQUEST['transaction'];
+        $mac_dibs = isset($_REQUEST['MAC']) ? $_REQUEST['MAC'] : '';
+        $paytype = isset($_REQUEST['cardTypeName']) ? $_REQUEST['cardTypeName'] : '';      
+      
+        // Generating array with form values and calculate the MAC string.
+        $mac_local = dibs_generate_mac_callback($_POST, $settings['paymentwindow']['hmac_key']);
+
+        if ($mac_dibs == $mac_local || empty($settings['paymentwindow']['hmac'])) {
+          // Updating transaction record with payment transaction id.
+          $updated = db_query("UPDATE {dibs_transactions} SET payment_transaction_id = %d, payment_status = 1, payment_type = '%s' WHERE tid = %d", $transact, $paytype, $transaction['tid']);
+
+          if ($updated) {
+            watchdog('dibs', 'Transaction ID #@tid validated as OK.', array(
+              '@tid' => $transaction['tid'],
+            ), WATCHDOG_INFO);
+          }
+
+          // Reload the transaction.
+          $transaction = dibs_transaction_load($transaction['tid']);
+
+          // Invoking the module that implemented the payment.
+          dibs_invoke($transaction['api_module'], 'transaction_callback', $transaction['api_delta'], $transaction);
         }
-
-        // Reload the transaction.
-        $transaction = dibs_transaction_load($transaction['tid']);
-
-        // Invoking the module that implemented the payment.
-        dibs_invoke($transaction['api_module'], 'transaction_callback', $transaction['api_delta'], $transaction);
+      
+      }
+      else {
+        watchdog('dibs', 'Transaction ID not set in request data for OK callback, transaction #@tid.', array(
+          '@tid' => $transaction['tid'],
+        ), WATCHDOG_ERROR);
       }
     }
-  }
-  else {
-    watchdog('dibs', 'Transaction not set in request data for OK callback, transaction #@tid.', array(
-      '@tid' => $transaction['tid'],
-    ), WATCHDOG_ERROR);
+    // Flex Window callback
+    else if ($settings['general']['type'] == 'flex') {
+      if (isset($_REQUEST['transact'])) {
+        $transact = $_REQUEST['transact'];
+        $authkey = isset($_REQUEST['authkey']) ? $_REQUEST['authkey'] : '';
+        $paytype = isset($_REQUEST['paytype']) ? $_REQUEST['paytype'] : '';
+        $md5_key = md5($settings['flexwindow']['md5_key2'] . md5($settings['flexwindow']['md5_key1'] . 'transact=' . $transact . '&amount=' . ($transaction['payment_price'] * 100) . '&currency=' . $settings['general']['currency']));
+        if ($md5_key == $authkey || empty($settings['flexwindow']['md5'])) {
+          // Updating transaction record with payment transaction id.
+          $updated = db_query("UPDATE {dibs_transactions} SET payment_transaction_id = %d, payment_status = 1, payment_type = '%s' WHERE tid = %d", $transact, $paytype, $transaction['tid']);
+
+          if ($updated) {
+            watchdog('dibs', 'Transaction ID #@tid validated as OK.', array(
+              '@tid' => $transaction['tid'],
+            ), WATCHDOG_INFO);
+          }
+
+          // Reload the transaction.
+          $transaction = dibs_transaction_load($transaction['tid']);
+
+          // Invoking the module that implemented the payment.
+          dibs_invoke($transaction['api_module'], 'transaction_callback', $transaction['api_delta'], $transaction);
+        }
+      }
+      else {
+        watchdog('dibs', 'Transaction ID not set in request data for OK callback, transaction #@tid.', array(
+          '@tid' => $transaction['tid'],
+        ), WATCHDOG_ERROR);
+      }
+    }
   }
 }
 
