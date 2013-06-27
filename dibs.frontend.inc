@@ -67,7 +67,7 @@ function dibs_frontend_redirect_form($form, &$form_state = array(), $settings, $
   if (isset($data['payment_retry_count']) && $data['payment_retry_count']) {
     $data['payment_order_id'] .= '-' . $data['payment_retry_count'];
   }
-  
+
   $split = !empty($data['params']['split_payment_price']) ? count($data['params']['split_payment_price']) : 1;
   $subunit = !empty($data['params']['disable_subunit_calc']) ? 1 : 100;
 
@@ -210,6 +210,24 @@ function dibs_frontend_redirect_form($form, &$form_state = array(), $settings, $
     }
     $form['#action'] = 'https://payment.architrade.com/paymentweb/start.action';
   }
+  elseif ($settings['general']['type'] == 'mobile') {
+    $form['#action'] = 'https://mopay.dibspayment.com/';
+    $form['acceptreturnurl'] = $form['accepturl'];
+    unset($form['accepturl']);
+    $form['cancelreturnurl'] = $form['cancelurl'];
+    unset($form['cancelurl']);
+    $form['addfee'] = $form['calcfee'];
+    unset($form['calcfee']);
+    $form['paytype'] = array(
+      '#type' => 'hidden',
+      '#value' => implode(',', $settings['mobilewindow']['paytypes']),
+    );
+    unset($form['uniqueoid']);
+    $form['uniqueid'] = array(
+      '#type' => 'hidden',
+      '#value' => $form['orderid']['#value']
+    );
+  }
 
   // Order and payment info fields
   // If order_info_long contains data are we not sending order_info_short to DIBS.
@@ -245,7 +263,6 @@ function dibs_frontend_redirect_form($form, &$form_state = array(), $settings, $
   if (function_exists($func)) {
     $func($form, $data['api_delta']);
   }
-
   return $form;
 }
 

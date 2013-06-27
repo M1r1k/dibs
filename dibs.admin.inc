@@ -106,7 +106,7 @@ function dibs_admin_settings_form($form, &$form_state, $module = NULL, $delta = 
     '#type' => 'select',
     '#title' => t('Window type'),
     '#required' => $default,
-    '#options' => array('' => '', 'pay' => t('Pay window'), 'flex' => t('Flex window')),
+    '#options' => array('' => '', 'pay' => t('Pay window'), 'flex' => t('Flex window'), 'mobile' => t('Mobile window')),
     '#default_value' => dibs_get_settings_value($module, $delta, 'general', 'type', ($default ? 1 : '')),
     '#description' => t('If enabled, DIBS will make some extra checks on the sended data, to be sure that no one manipulated it. If enabled should the keys below be filled in!'),
   );
@@ -253,6 +253,31 @@ function dibs_admin_settings_form($form, &$form_state, $module = NULL, $delta = 
     '#required' => FALSE,
     '#default_value' => dibs_get_settings_value($module, $delta, 'flexwindow', 'voucher', ''),
     '#description' => t('If set to Yes, then the list of payment types on the first page of FlexWin will contain vouchers, too.'),
+  );
+
+  // Mobile window
+  $form['mobilewindow'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Mobile Window settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#tree' => TRUE,
+  );
+
+  $form['mobilewindow']['paytypes'] = array(
+    '#type' => 'select',
+    '#title' => t('Select'),
+    '#multiple' => TRUE,
+    '#description' => t('The description appears usually below the item.'),
+    '#options' => array(
+      'MC' => t('Master Carx'),
+      'VISA' => t('VISA card'),
+      'ELEC' => t('VISA Electron'),
+      'AMEX' => t('American Express'),
+      'DK' => t('Dankort'),
+      'V-DK' => t('VISA/Dankort'),
+    ),
+    '#default_value' => dibs_get_settings_value($module, $delta, 'mobilewindow', 'paytypes', array('MC', 'VISA', 'ELEC', 'AMEX', 'DK', 'V-DK')),
   );
 
   // Order ID
@@ -433,6 +458,7 @@ function dibs_admin_settings_form_submit($form, &$form_state) {
   $general        = $form_state['values']['general'];
   $paymentwindow  = $form_state['values']['paymentwindow'];
   $flexwindow     = $form_state['values']['flexwindow'];
+  $mobilewindow   = $form_state['values']['mobilewindow'];
   $orderid        = $form_state['values']['orderid'];
   $advanced       = $form_state['values']['advanced'];
   $callbacks      = $form_state['values']['callbacks'];
@@ -449,6 +475,7 @@ function dibs_admin_settings_form_submit($form, &$form_state) {
     'general' => $general,
     'paymentwindow' => $paymentwindow,
     'flexwindow' => $flexwindow,
+    'mobilewindow' => $mobilewindow,
     'advanced' => $advanced,
     'callbacks' => $callbacks,
   );
