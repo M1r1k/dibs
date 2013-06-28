@@ -211,13 +211,30 @@ function dibs_frontend_redirect_form($form, &$form_state = array(), $settings, $
     $form['#action'] = 'https://payment.architrade.com/paymentweb/start.action';
   }
   elseif ($settings['general']['type'] == 'mobile') {
-    $form['#action'] = 'https://mopay.dibspayment.com/';
+    $form['#action'] = 'https://sat1.dibspayment.com/dibspaymentwindow/entrypoint';
     $form['acceptreturnurl'] = $form['accepturl'];
     unset($form['accepturl']);
     $form['cancelreturnurl'] = $form['cancelurl'];
     unset($form['cancelurl']);
     $form['addfee'] = $form['calcfee'];
     unset($form['calcfee']);
+    $form['language'] = $form['lang'];
+    unset($form['lang']);
+    if ($form['language']['#value'] == 'da') {
+      $form['language']['#value'] .= '_DK';
+    }
+    if ($form['language']['#value'] == 'en') {
+      $form['language']['#value'] .= '_UK';
+    }
+    if ($form['language']['#value'] == 'sv') {
+      $form['language']['#value'] .= '_SE';
+    }
+    if ($form['language']['#value'] == 'nb') {
+      $form['language']['#value'] .= '_NO';
+    }
+    if ($form['language']['#value'] == 'fi') {
+      $form['language']['#value'] .= '_FIN';
+    }
     $form['paytype'] = array(
       '#type' => 'hidden',
       '#value' => implode(',', $settings['mobilewindow']['paytypes']),
