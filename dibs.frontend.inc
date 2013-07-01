@@ -210,8 +210,13 @@ function dibs_frontend_redirect_form($form, &$form_state = array(), $settings, $
     }
     $form['#action'] = 'https://payment.architrade.com/paymentweb/start.action';
   }
+  // The mobile payment window uses a newer API version. So we need to change
+  // some of the key names used to make it work. Another change is the use of
+  // HMAC instead of MD5 checksum.
   elseif ($settings['general']['type'] == 'mobile') {
     $form['#action'] = 'https://sat1.dibspayment.com/dibspaymentwindow/entrypoint';
+
+    // Set the params that have a new key.
     $form['acceptreturnurl'] = $form['accepturl'];
     unset($form['accepturl']);
     $form['cancelreturnurl'] = $form['cancelurl'];
@@ -220,6 +225,8 @@ function dibs_frontend_redirect_form($form, &$form_state = array(), $settings, $
     unset($form['calcfee']);
     $form['language'] = $form['lang'];
     unset($form['lang']);
+
+    // Language has changed format a bit, fix this.
     if ($form['language']['#value'] == 'da') {
       $form['language']['#value'] .= '_DK';
     }
@@ -235,15 +242,48 @@ function dibs_frontend_redirect_form($form, &$form_state = array(), $settings, $
     if ($form['language']['#value'] == 'fi') {
       $form['language']['#value'] .= '_FIN';
     }
+
+    // TODO this should be configurable, for starters, lets just add all as possible options.
     $form['paytype'] = array(
       '#type' => 'hidden',
-      '#value' => implode(',', $settings['mobilewindow']['paytypes']),
+      '#value' => 'MC,VISA,ELEC,AMEX,DK,V-DK',
     );
+
+    // Unique order ids is a bit different.
     unset($form['uniqueoid']);
     $form['uniqueid'] = array(
       '#type' => 'hidden',
       '#value' => $form['orderid']['#value']
     );
+
+    // MD5 key is never used in mobile payment window
+    unset($form['md5key']);
+    // Add HMAC key if enabled.
+    if (!empty($settings['general']['md5']) && !empty($settings['general']['hmac_key'])) {
+      $hmac_data = array();
+      foreach ($form as $key => $value) {
+        $test = array(
+          'acceptreturnurl',
+          'addfee',
+          'amount',
+          'callbackurl',
+          'cancelreturnurl',
+          'currency',
+          'language',
+          'merchant',
+          'orderid',
+          'paytype',
+          'test',
+        );
+        if (in_array($key, $test)) {
+          $hmac_data[$key] = $value['#value'];
+        }
+      }
+      $form['MAC'] = array(
+        '#type' => 'hidden',
+        '#value' => dibs_generate_hmac_key($hmac_data, $settings['general']['hmac_key']),
+      );
+    }
   }
 
   // Order and payment info fields
@@ -401,10 +441,11 @@ function dibs_frontend_cancel_form_submit($form, &$form_state) {
  */
 function dibs_frontend_validate_transact($request, $split = 1) {
   if ($split == 1) {
-    return isset($request['transact']);
+    // Mobile payments uses the transaction key.
+    return !empty($request['transact']) || !empty($request['transaction']);
   }
   foreach (range(1, $split) as $key) {
-    if (!isset($request['transact' . $key])) {
+    if (!isset($request['transact' . $key]) || !isset($request['transaction' . $key])) {
       return FALSE;
     }
   }
@@ -419,30 +460,57 @@ function dibs_frontend_validate_transact($request, $split = 1) {
 function dibs_frontend_dibs_callback_ok($transaction) {
   $split = $transaction['split_payments'];
   if (dibs_frontend_validate_transact($_REQUEST, $split)) {
-    $authkey = isset($_REQUEST['authkey']) ? $_REQUEST['authkey'] : '';
     $paytype = isset($_REQUEST['paytype']) ? $_REQUEST['paytype'] : '';
-    if ($split == 1) {
-      $transact = $_REQUEST['transact'];
-      $transact_key = 'transact='. $transact;
+    if (!empty($_REQUEST['cardTypeName'])) {
+      $paytype = $_REQUEST['cardTypeName'];
     }
+    // No split payments
+    if ($split == 1) {
+      // In the old API transact key is used, in the new API transaction key
+      // is used. We should be able to handle both.
+      if (!empty($_REQUEST['transact'])) {
+        $transact = $_REQUEST['transact'];
+        $transact_key = 'transact='. $transact;
+      }
+      elseif (!empty($_REQUEST['transaction'])) {
+        $transact = $_REQUEST['transaction'];
+        $transact_key = 'transaction='. $transact;
+      }
+    }
+    // Split paymebts
     else {
+      $lookup_key = !isset($request['transact' . $key]) ? 'transact' : 'transaction';
       $transact = '';
       $transact_a = array();
       $transact_key = '';
       foreach (range(1, $split) as $key) {
-        $transact_a[$key] = $_REQUEST['transact' . $key];
+        $transact_a[$key] = $_REQUEST[$lookup_key . $key];
         if (empty($transact_key)) {
-          $transact_key .= 'transact1=' . $_REQUEST['transact' . $key];
+          $transact_key .= $lookup_key . '1=' . $_REQUEST[$lookup_key . $key];
         }
         else {
-          $transact_key .= '&transact' . $key . '=' . $_REQUEST['transact' . $key];
+          $transact_key .= '&' . $lookup_key . $key . '=' . $_REQUEST[$lookup_key . $key];
         }
       }
     }
     if (!empty($transaction)) {
       $settings = dibs_load_settings($transaction['api_module'], $transaction['api_delta']);
-      $md5_key = md5($settings['general']['md5_key2'] . md5($settings['general']['md5_key1'] . $transact_key .'&amount='. ($transaction['payment_price'] * 100) .'&currency='. $transaction['payment_currency']));
-      if ($md5_key == $authkey || empty($settings['md5'])) {
+      $test = FALSE;
+      // Test MD5 or HMAC depending on what we got.
+      if (!empty($settings['general']['md5'])) {
+        if (!empty($_REQUEST['authkey'])) {
+          $md5_key = md5($settings['general']['md5_key2'] . md5($settings['general']['md5_key1'] . $transact_key .'&amount='. ($transaction['payment_price'] * 100) .'&currency='. $transaction['payment_currency']));
+          $test = $md5_key == $_REQUEST['authkey'];
+        }
+        elseif (!empty($_REQUEST['MAC'])) {
+          $hmac_data = $_REQUEST;
+          unset($hmac_data['MAC']);
+          $test = dibs_generate_hmac_key($hmac_data, $settings['general']['hmac_key']) == $_REQUEST['MAC'];
+        }
+      }
+
+      // We need to pass the test or not do the test at all.
+      if ($test || empty($settings['general']['md5'])) {
         // Updating transaction record with payment transaction id
         $update = array(
           'payment_status' => 1,

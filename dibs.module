@@ -819,3 +819,33 @@ function dibs_error_codes($type = 'capture') {
   }
   return array();
 }
+
+/**
+ * Utility function to create HMAC key for some payment windows.
+ *
+ * @param $data
+ *    array with data to send
+ * @param $secret_key
+ *    string containing the hmac secret key
+ *
+ * @return generated hmac key.
+ */
+function dibs_generate_hmac_key($data, $secret_key) {
+  ksort($data);
+
+  // First get a string with all params.
+  $params = array();
+  foreach ($data as $key => $value) {
+    $params[] = $key . '=' . $value;
+  }
+  $params_string = implode('&', $params);
+
+  // Then get the key.
+  $key_as_string = array();
+  // Split as bytes in hex and convert to each byte to char
+  foreach (explode("\n", trim(chunk_split($secret_key, 2, "\n"))) as $h) {
+    $key_as_string[] = chr(hexdec($h));
+  }
+  $key_as_string = implode('', $key_as_string);
+  return hash_hmac('sha256', $params_string, $key_as_string);
+}

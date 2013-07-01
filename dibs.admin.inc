@@ -119,7 +119,7 @@ function dibs_admin_settings_form($form, &$form_state, $module = NULL, $delta = 
   );
   $form['general']['md5'] = array(
     '#type' => 'select',
-    '#title' => t('Perform MD5 control'),
+    '#title' => t('Perform MD5 control or HMAC'),
     '#options' => array('' => '', 0 => t('No'), 1 => t('Yes')),
     '#default_value' => dibs_get_settings_value($module, $delta, 'general', 'md5', ($default ? 1 : '')),
     '#description' => t('If enabled, DIBS will make some extra checks on the sended data, to be sure that no one manipulated it. If enabled should the keys below be filled in!'),
@@ -139,6 +139,14 @@ function dibs_admin_settings_form($form, &$form_state, $module = NULL, $delta = 
     '#required' => FALSE,
     '#default_value' => dibs_get_settings_value($module, $delta, 'general', 'md5_key2', ''),
     '#description' => t('MD5 key 2 - used if "Perform MD5 control" is enabled.'),
+  );
+  $form['general']['hmac_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('HMAC key'),
+    '#maxlength' => 255,
+    '#required' => FALSE,
+    '#default_value' => dibs_get_settings_value($module, $delta, 'general', 'hmac_key', ''),
+    '#description' => t('HMAC key - used if "Perform HMAC control" is enabled.'),
   );
   $form['general']['lang'] = array(
     '#type' => 'select',
