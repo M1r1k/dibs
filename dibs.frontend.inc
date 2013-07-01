@@ -499,7 +499,11 @@ function dibs_frontend_dibs_callback_ok($transaction) {
       // Test MD5 or HMAC depending on what we got.
       if (!empty($settings['general']['md5'])) {
         if (!empty($_REQUEST['authkey'])) {
-          $md5_key = md5($settings['general']['md5_key2'] . md5($settings['general']['md5_key1'] . $transact_key .'&amount='. ($transaction['payment_price'] * 100) .'&currency='. $transaction['payment_currency']));
+          $amount = $transaction['payment_price'] * 100 ;
+          if (isset($_REQUEST['fee'])) {
+            $amount += $_REQUEST['fee'];
+          }
+          $md5_key = md5($settings['general']['md5_key2'] . md5($settings['general']['md5_key1'] . $transact_key .'&amount='. $amount .'&currency='. $transaction['payment_currency']));
           $test = $md5_key == $_REQUEST['authkey'];
         }
         elseif (!empty($_REQUEST['MAC'])) {
