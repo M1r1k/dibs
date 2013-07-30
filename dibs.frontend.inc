@@ -221,8 +221,10 @@ function dibs_frontend_redirect_form($form, &$form_state = array(), $settings, $
     unset($form['accepturl']);
     $form['cancelreturnurl'] = $form['cancelurl'];
     unset($form['cancelurl']);
-    $form['addfee'] = $form['calcfee'];
-    unset($form['calcfee']);
+    if ($form['calcfee']) {
+      $form['addfee'] = $form['calcfee'];
+      unset($form['calcfee']);
+    }
     $form['language'] = $form['lang'];
     unset($form['lang']);
 
