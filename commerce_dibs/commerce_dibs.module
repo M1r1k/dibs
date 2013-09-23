@@ -45,13 +45,16 @@ function commerce_dibs_dibsapi($op = 'info', $delta = NULL, &$transaction = NULL
         $fail = FALSE;
         if ($order && $commerce_transactions) {
           foreach ($commerce_transactions as $commerce_transaction) {
-            if ($commerce_transaction->status !== COMMERCE_CREDIT_AUTH_ONLY) {
+            if ($commerce_transaction->payment_method == 'commerce_dibs' && $commerce_transaction->status !== COMMERCE_CREDIT_AUTH_ONLY) {
               $fail = TRUE;
             }
           }
           if ($fail) {
             $tries += 1;
-            sleep(1000);
+            $sleep_time = (int) variable_get('commerce_dibs_sleep_time', 1000);
+            if ($sleep_time > 0) {
+              usleep($sleep_time);
+            }
           }
           else {
             drupal_goto('checkout/' . $order->order_id . '/payment/return/' . $transaction['params']['payment_redirect_key']);
