@@ -337,7 +337,7 @@ function dibs_load_settings($module, $delta, $fallback = TRUE) {
     foreach ((array) $default_settings as $group => $child) {
       if (is_array($child)) {
         foreach ($child as $key => $value) {
-          if (!isset($settings[$group][$key]) || drupal_strlen(trim($settings[$group][$key])) == 0) {
+          if (!isset($settings[$group][$key]) || (is_string($settings[$group][$key]) && drupal_strlen(trim($settings[$group][$key])) == 0)) {
             $settings[$group][$key] = $value;
           }
         }
