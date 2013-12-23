@@ -510,12 +510,12 @@ function dibs_payment_prepare($data, $redirect = TRUE) {
     'split_payments' => 1,
     'params' => array(),
   );
-  
+
   // Generating order id
   $order_id = !empty($data['payment_order_id']) ? $data['payment_order_id'] : dibs_get_next_order_id($data['api_module'], $data['api_delta']);
 
   // Creating new api_hash
-  $hash = sha1(time() . $order_id . drupal_get_private_key());
+  $hash = sha1(microtime() . $order_id . drupal_get_private_key());
 
   // Creating dibs transaction
   $transaction = array(
