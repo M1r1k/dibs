@@ -711,7 +711,7 @@ function template_preprocess_dibs_accept_page(&$variables) {
  *    successful capture.
  */
 function dibs_capture_transaction($api_module, $api_delta, $transaction) {
-  $payment_data = db_query("SELECT payment_order_id AS orderid, payment_price AS amount FROM {dibs_transactions} WHERE payment_transaction_id = :transaction", array(':transaction' => $transaction))->fetch();
+  $payment_data = db_query("SELECT payment_order_id AS orderid, payment_price AS amount, payment_fee AS fee FROM {dibs_transactions} WHERE payment_transaction_id = :transaction", array(':transaction' => $transaction))->fetch();
   if (empty($payment_data->orderid) || empty($payment_data->amount)) {
     return array(
       'status' => FALSE,
@@ -728,6 +728,12 @@ function dibs_capture_transaction($api_module, $api_delta, $transaction) {
     'orderid' => $payment_data->orderid,
     'amount' => $payment_data->amount * 100,
   );
+
+  // Add the fee if there is any.
+  if ($payment_data->fee > 0) {
+    $data['amount'] += $payment_data->fee;
+  }
+
   $data['merchant'] = $settings['general']['merchant'];
   if ($settings['general']['account']) {
     $data['account'] = $settings['general']['account'];
