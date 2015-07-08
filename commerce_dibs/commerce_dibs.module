@@ -45,7 +45,12 @@ function commerce_dibs_dibsapi($op = 'info', $delta = NULL, &$transaction = NULL
         $fail = FALSE;
         if ($order && $commerce_transactions) {
           foreach ($commerce_transactions as $commerce_transaction) {
-            if ($commerce_transaction->payment_method == 'commerce_dibs' && $commerce_transaction->status !== COMMERCE_CREDIT_AUTH_ONLY) {
+            if ($commerce_transaction->payment_method == 'commerce_dibs' &&
+                !in_array($commerce_transaction->status,
+                         array(
+                           COMMERCE_CREDIT_AUTH_ONLY,
+                           COMMERCE_PAYMENT_STATUS_SUCCESS,
+                         ))) {
               $fail = TRUE;
             }
           }
@@ -65,13 +70,21 @@ function commerce_dibs_dibsapi($op = 'info', $delta = NULL, &$transaction = NULL
       drupal_goto('checkout/' . $order->order_id . '/payment/back/' . $transaction['params']['payment_redirect_key']);
       break;
     case 'transaction_callback':
+      $settings = dibs_load_settings($transaction['api_module'], $delta);
+      $status = COMMERCE_CREDIT_AUTH_ONLY;
+
+      if (isset($settings['advanced']['capturenow']) &&
+          $settings['advanced']['capturenow']) {
+        $status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+      }
+
       $commerce_transactions = commerce_payment_transaction_load_multiple(FALSE, array('remote_id' => $transaction['tid']));
       // Update transaction(s).
       if ($commerce_transactions) {
         if ($transaction['split_payments'] == 1) {
           $commerce_transaction = array_shift($commerce_transactions);
           $commerce_transaction->message = 'Payment completed at DIBS';
-          $commerce_transaction->status = COMMERCE_CREDIT_AUTH_ONLY;
+          $commerce_transaction->status = $status;
           $commerce_transaction->payload['dibs_id'] = $transaction['payment_transaction_id'];
           commerce_payment_transaction_save($commerce_transaction);
         }
@@ -79,7 +92,7 @@ function commerce_dibs_dibsapi($op = 'info', $delta = NULL, &$transaction = NULL
           foreach ($commerce_transactions as $commerce_transaction) {
             $delta = $commerce_transaction->payload['delta'];
             $commerce_transaction->message = 'Payment completed at DIBS';
-            $commerce_transaction->status = COMMERCE_CREDIT_AUTH_ONLY;
+            $commerce_transaction->status = $status;
             $commerce_transaction->payload['dibs_id'] = $transaction['dibs_split_payments'][$delta];
             commerce_payment_transaction_save($commerce_transaction);
           }
