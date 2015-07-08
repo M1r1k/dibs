@@ -221,7 +221,7 @@ function dibs_frontend_redirect_form($form, &$form_state = array(), $settings, $
     unset($form['accepturl']);
     $form['cancelreturnurl'] = $form['cancelurl'];
     unset($form['cancelurl']);
-    if ($form['calcfee']) {
+    if (!empty($form['calcfee'])) {
       $form['addfee'] = $form['calcfee'];
       unset($form['calcfee']);
     }
@@ -521,8 +521,10 @@ function dibs_frontend_dibs_callback_ok($transaction) {
         $update = array(
           'payment_status' => 1,
           'payment_type' => $paytype,
-          'payment_fee' => $_REQUEST['fee'],
         );
+        if (isset($_REQUEST['fee'])) {
+            $update['payment_fee'] = $_REQUEST['fee'];
+          }
         if ($split == 1) {
           $update['payment_transaction_id'] = $transact;
         }
