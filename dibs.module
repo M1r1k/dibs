@@ -207,6 +207,16 @@ function dibs_dibsapi($op = 'info', $delta = NULL, &$transaction = NULL, $a3 = N
 }
 
 /**
+ * Implements hook_views_api()
+ */
+function dibs_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'dibs') . '/views',
+  );
+}
+
+/**
  * Checking if a certain module and delta are the default one.
  *
  * @param stirng $module
