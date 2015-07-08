@@ -659,8 +659,8 @@ function dibs_create_delivery_line_fields($data) {
  */
 function template_preprocess_dibs_redirect_page(&$variables) {
   $transaction = $variables['transaction'];
-  $variables['template_files'][] = 'dibs-redirect-page-' . $transaction['api_module'];
-  $variables['template_files'][] = 'dibs-redirect-page-' . $transaction['api_module'] . '-' . $transaction['api_delta'];
+  $variables['theme_hook_suggestions'][] = 'dibs_redirect_page__' . $transaction['api_module'];
+  $variables['theme_hook_suggestions'][] = 'dibs_redirect_page__' . $transaction['api_module'] . '__' . $transaction['api_delta'];
 }
 
 /**
@@ -670,8 +670,8 @@ function template_preprocess_dibs_redirect_page(&$variables) {
  */
 function template_preprocess_dibs_cancel_page(&$variables) {
   $transaction = $variables['transaction'];
-  $variables['template_files'][] = 'dibs-cancel-page-' . $transaction['api_module'];
-  $variables['template_files'][] = 'dibs-cancel-page-' . $transaction['api_module'] . '-' . $transaction['api_delta'];
+  $variables['theme_hook_suggestions'][] = 'dibs_cancel_page__' . $transaction['api_module'];
+  $variables['theme_hook_suggestions'][] = 'dibs_cancel_page__' . $transaction['api_module'] . '__' . $transaction['api_delta'];
 }
 
 /**
@@ -681,8 +681,8 @@ function template_preprocess_dibs_cancel_page(&$variables) {
  */
 function template_preprocess_dibs_accept_page(&$variables) {
   $transaction = $variables['transaction'];
-  $variables['template_files'][] = 'dibs-accept-page-' . $transaction['api_module'];
-  $variables['template_files'][] = 'dibs-accept-page-' . $transaction['api_module'] . '-' . $transaction['api_delta'];
+  $variables['theme_hook_suggestions'][] = 'dibs_accept_page__' . $transaction['api_module'];
+  $variables['theme_hook_suggestions'][] = 'dibs_accept_page__' . $transaction['api_module'] . '__' . $transaction['api_delta'];
 }
 
 /**
