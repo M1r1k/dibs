@@ -52,7 +52,6 @@ function dibs_permission() {
   );
 }
 
-
 /**
  * Implementation of hook_theme().
  */
@@ -130,27 +129,6 @@ function dibs_menu() {
     'access arguments' => array('administer dibs settings'),
     'file' => 'dibs.admin.inc',
   );
-
-  // Transaction pages
-  /*
-  $items['admin/reports/dibs-transactions'] = array(
-    'page callback' => 'dibs_admin_transactions_list',
-    'title' => 'DIBS transactions',
-    'description' => 'View DIBS payment transactions',
-    'weight' => 2,
-    'type' => MENU_NORMAL_ITEM,
-    'access arguments' => array('administer dibs transactions'),
-    'file' => 'dibs.admin.inc',
-  );
-  $items['admin/reports/dibs-transactions/view/%'] = array(
-    'page callback' => 'dibs_admin_transactions_view',
-    'page arguments' => array(4),
-    'title' => 'View transaction',
-    'type' => MENU_CALLBACK,
-    'access arguments' => array('administer dibs transactions'),
-    'file' => 'dibs.admin.inc',
-  );
-  */
 
   // Front end pages
   $items['payment/dibs/callbackok/%dibs_transaction_hash'] = array(
