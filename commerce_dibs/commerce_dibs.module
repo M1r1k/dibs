@@ -134,12 +134,24 @@ function commerce_dibs_commerce_payment_transaction_status_info() {
   );
 }
 
+/**
+ * Returns the default settings for the commerce_dibs payment method.
+ */
+
+function commerce_dibs_default_settings() {
+  return array(
+    'split' => '',
+  );
+}
 
 /**
  * Payment method callback: settings form.
  */
 function commerce_dibs_settings_form($settings = NULL) {
   $form = array();
+
+  // Merge default settings with stored ones.
+  $settings = $settings + commerce_dibs_default_settings();
 
   $form['info']['#markup'] = l(t('Setup commerce dibs'), 'admin/config/payment/dibs/edit/commerce_dibs/commerce_dibs');
 
