@@ -428,11 +428,11 @@ function dibs_transaction_load($key = NULL, $op = 'tid') {
 /**
  * Legacy name for dibs_transaction_load().
  *
- * Hold-over for backwards compatibility. Please switch to
- * dibs_transaction_load at earliest convenience.
+ * @deprecated Hold-over for backwards compatibility. Please switch to
+ *   dibs_transaction_load at earliest convenience.
  */
 function dibs_load_transaction($key = NULL, $op = 'tid') {
-  dibs_transaction_load($key = NULL, $op = 'tid');
+  return dibs_transaction_load($key, $op);
 }
 
 /**

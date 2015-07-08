@@ -399,7 +399,7 @@ function dibs_frontend_cancel_form_submit($form, &$form_state) {
   $hash = $form_state['values']['hash'];
 
   // Loading the transaction
-  $data = dibs_load_transaction($hash, 'hash');
+  $data = dibs_transaction_load($hash, 'hash');
   $settings = dibs_load_settings($data['api_module'], $data['api_delta'], TRUE);
 
   // Make changes to order id if dictated by retry policy
