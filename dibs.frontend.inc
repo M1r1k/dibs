@@ -14,21 +14,21 @@
 function dibs_frontend_redirect_page($transaction) {
   $transaction['payment_price'] = (float) $transaction['payment_price'];
 
-  // Making some checks to check if the transaction is valid
-  if (isset($transaction['api_module'], $transaction['api_delta'])) {
+  // Making some checks to check if the transaction is valid.
+  if (!empty($transaction['payment_status']) && $transaction['payment_status'] > 0) {
+    drupal_set_message(t('Error redirecting to DIBS: the payment was already made!'), 'error');
+    return '';
+  }
+  elseif (empty($transaction['api_module']) || !is_scalar($transaction['api_delta'])) {
+    drupal_set_message(t('Error redirecting to DIBS: api_module or api_delta is missing!'), 'error');
+    return '';
+  }
+  else if (!empty($transaction['api_module']) && is_scalar($transaction['api_delta'])) {
     $info = module_invoke($transaction['api_module'], 'dibsapi', 'info', $transaction['api_delta']);
     if (empty($info) || !is_array($info)) {
       drupal_set_message(t('Error redirecting to DIBS: api_module and/or api_delta is not valid!'), 'error');
       return '';
     }
-  }
-  elseif (!empty($transaction['api_module']) || isset($transaction['api_delta'])) {
-    drupal_set_message(t('Error redirecting to DIBS: api_module or api_delta is missing!'), 'error');
-    return '';
-  }
-  elseif ($transaction['payment_status'] > 0) {
-    drupal_set_message(t('Error redirecting to DIBS: the payment was already made!'), 'error');
-    return '';
   }
 
   // Loading settings
@@ -337,14 +337,14 @@ function dibs_frontend_cancel_page($transaction) {
   $transaction['payment_price'] = (float)$transaction['payment_price'];
 
   // Making some checks to check if the transaction is valid
-  if (isset($data['api_module'], $data['api_delta'])) {
+  if (!empty($transaction['api_module']) && is_scalar($transaction['api_delta'])) {
     $info = module_invoke($transaction['api_module'], 'dibsapi', 'info', $transaction['api_delta']);
     if (empty($info) || !is_array($info)) {
       drupal_set_message(t('Error redirecting to DIBS: api_module and/or api_delta is not valid!'), 'error');
       return '';
     }
   }
-  elseif (!empty($data['api_module']) || isset($data['api_delta'])) {
+  elseif (!empty($transaction['api_module']) || is_scalar($transaction['api_delta'])) {
     drupal_set_message(t('Error redirecting to DIBS: api_module or api_delta is missing!'), 'error');
     return '';
   }

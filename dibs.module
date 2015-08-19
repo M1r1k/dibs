@@ -448,21 +448,20 @@ function dibs_payment_prepare($data, $redirect = TRUE) {
   global $user;
 
   // Checking required data in $data array
-  if (isset($data['api_module'], $data['api_delta'])) {
+  if (empty($data['payment_price']) || (!is_numeric($data['payment_price']) && !is_float($data['payment_price'])) || $data['payment_price'] <= 0) {
+    drupal_set_message(t('Error preparing the payment: payment_price is missing or not valid!'), 'error');
+    return '';
+  }
+  else if (empty($data['api_module']) || !is_scalar($data['api_delta'])) {
+    drupal_set_message(t('Error preparing the payment: api_module or api_delta is missing!'), 'error');
+    return '';
+  }
+  elseif (!empty($data['api_module']) && is_scalar($data['api_delta'])) {
     $info = module_invoke($data['api_module'], 'dibsapi', 'info', $data['api_delta']);
     if (empty($info) || !is_array($info)) {
       drupal_set_message(t('Error preparing the payment: api_module and/or api_delta is not valid!'), 'error');
       return '';
     }
-  }
-  elseif (!empty($data['api_module']) || isset($data['api_delta'])) {
-    drupal_set_message(t('Error preparing the payment: api_module or api_delta is missing!'), 'error');
-    return '';
-  }
-
-  if (empty($data['payment_price']) || (!is_numeric($data['payment_price']) && !is_float($data['payment_price'])) || $data['payment_price'] <= 0) {
-    drupal_set_message(t('Error preparing the payment: payment_price is missing or not valid!'), 'error');
-    return '';
   }
 
   // DIBS transaction data
