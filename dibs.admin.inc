@@ -11,16 +11,6 @@
  * @return string
  */
 function dibs_admin_settings_list() {
-  // @FIXME
-// The Assets API has totally changed. CSS, JavaScript, and libraries are now
-// attached directly to render arrays using the #attached property.
-// 
-// 
-// @see https://www.drupal.org/node/2169605
-// @see https://www.drupal.org/node/2408597
-// drupal_add_css(drupal_get_path('module', 'dibs') .'/dibs.admin.css');
-
-
   // Looping through all modules that implement the hook_dibsapi.
   $attributes['class'][] = 'dibs-admin-settings-list';
   $output = '<br />';

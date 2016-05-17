@@ -1,0 +1,7 @@
+general:
+  merchant_id: ''
+  account: ''
+  test_mode: false
+  type: 'flex'
+  lang: 'en'
+  currency: '978'
