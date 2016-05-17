@@ -1,6 +1,0 @@
-name = DIBS
-description = An API module that makes it possible for other modules to receive payments via DIBS Payment Gateway
-core = 7.x
-package = DIBS
-configure = admin/config/payment/dibs
-
