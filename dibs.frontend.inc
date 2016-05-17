@@ -24,7 +24,7 @@ function dibs_frontend_redirect_page($transaction) {
     return '';
   }
   else if (!empty($transaction['api_module']) && is_scalar($transaction['api_delta'])) {
-    $info = module_invoke($transaction['api_module'], 'dibsapi', 'info', $transaction['api_delta']);
+    $info = \Drupal::moduleHandler()->invoke($transaction['api_module'], 'dibsapi', ['info', $transaction['api_delta']]);
     if (empty($info) || !is_array($info)) {
       drupal_set_message(t('Error redirecting to DIBS: api_module and/or api_delta is not valid!'), 'error');
       return '';
@@ -41,7 +41,7 @@ function dibs_frontend_redirect_page($transaction) {
   $settings['auto_submit'] = 1;
 
   // Getting redirect form
-  $form = drupal_get_form('dibs_frontend_redirect_form', $settings, $transaction);
+  $form = \Drupal::formBuilder()->getForm('dibs_frontend_redirect_form', $settings, $transaction);
 
   // We are forcing the accept-charset to be ISO-8859-1, else will the order and delivery
   // info sent to DIBS be shown with wrong characters in the payment window and in their
@@ -50,7 +50,16 @@ function dibs_frontend_redirect_page($transaction) {
     $form['#attributes']['accept-charset'] = 'ISO-8859-1';
   }
 
-  return theme('dibs_redirect_page', array('form' => $form, 'settings' => $settings, 'transaction' => $transaction));
+  // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// return theme('dibs_redirect_page', array('form' => $form, 'settings' => $settings, 'transaction' => $transaction));
+
 }
 
 /**
@@ -114,18 +123,27 @@ function dibs_frontend_redirect_form($form, &$form_state = array(), $settings, $
     '#type' => 'hidden',
     '#value' => 1,
   );
-  $form['accepturl'] = array(
-    '#type' => 'hidden',
-    '#value' => url($settings['callbacks']['accepturl'] . '/' . $data['api_hash'], array('absolute' => TRUE)),
-  );
-  $form['cancelurl'] = array(
-    '#type' => 'hidden',
-    '#value' => url($settings['callbacks']['cancelurl'] . '/' . $data['api_hash'], array('absolute' => TRUE)),
-  );
-  $form['callbackurl'] = array(
-    '#type' => 'hidden',
-    '#value' => url($settings['callbacks']['callbackok'] . '/' . $data['api_hash'], array('absolute' => TRUE)),
-  );
+  // @FIXME
+// url() expects a route name or an external URI.
+// $form['accepturl'] = array(
+//     '#type' => 'hidden',
+//     '#value' => url($settings['callbacks']['accepturl'] . '/' . $data['api_hash'], array('absolute' => TRUE)),
+//   );
+
+  // @FIXME
+// url() expects a route name or an external URI.
+// $form['cancelurl'] = array(
+//     '#type' => 'hidden',
+//     '#value' => url($settings['callbacks']['cancelurl'] . '/' . $data['api_hash'], array('absolute' => TRUE)),
+//   );
+
+  // @FIXME
+// url() expects a route name or an external URI.
+// $form['callbackurl'] = array(
+//     '#type' => 'hidden',
+//     '#value' => url($settings['callbacks']['callbackok'] . '/' . $data['api_hash'], array('absolute' => TRUE)),
+//   );
+
   $form['windowtype'] = array(
     '#type' => 'hidden',
     '#value' => $settings['general']['type'],
@@ -338,7 +356,7 @@ function dibs_frontend_cancel_page($transaction) {
 
   // Making some checks to check if the transaction is valid
   if (!empty($transaction['api_module']) && is_scalar($transaction['api_delta'])) {
-    $info = module_invoke($transaction['api_module'], 'dibsapi', 'info', $transaction['api_delta']);
+    $info = \Drupal::moduleHandler()->invoke($transaction['api_module'], 'dibsapi', ['info', $transaction['api_delta']]);
     if (empty($info) || !is_array($info)) {
       drupal_set_message(t('Error redirecting to DIBS: api_module and/or api_delta is not valid!'), 'error');
       return '';
@@ -363,9 +381,18 @@ function dibs_frontend_cancel_page($transaction) {
   $settings = dibs_load_settings($transaction['api_module'], $transaction['api_delta']);
 
   // Getting redirect form
-  $form = drupal_get_form('dibs_frontend_cancel_form', $settings, $transaction);
+  $form = \Drupal::formBuilder()->getForm('dibs_frontend_cancel_form', $settings, $transaction);
 
-  return theme('dibs_cancel_page', array('form' => $form, 'settings' => $settings, 'transaction' => $transaction));
+  // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// return theme('dibs_cancel_page', array('form' => $form, 'settings' => $settings, 'transaction' => $transaction));
+
 }
 
 /**
@@ -421,7 +448,7 @@ function dibs_frontend_cancel_form_submit($form, &$form_state) {
         'api_hash' => $hash,
         'payment_retry_count' => $data['payment_retry_count']+1,
       );
-      drupal_write_record('dibs_transactions', $suffixed, array('api_hash'));
+      \Drupal::database()->merge('dibs_transactions')->fields($suffixed)->key(array('api_hash'))->execute();
   }
 
   // Redirecting to the payment redirect page
@@ -545,9 +572,9 @@ function dibs_frontend_dibs_callback_ok($transaction) {
         }
 
         if ($updated) {
-          watchdog('dibs', 'Transaction #@tid validated as OK.', array(
+          \Drupal::logger('dibs')->info('Transaction #@tid validated as OK.', array(
             '@tid' => $transaction['tid'],
-          ), WATCHDOG_INFO);
+          ));
         }
 
         // Reload the transaction.
@@ -560,17 +587,17 @@ function dibs_frontend_dibs_callback_ok($transaction) {
         }
       }
       else {
-        watchdog('dibs', "MD5 key didn't match for transaction, got @md5_in expected @md5_calc" , array(
+        \Drupal::logger('dibs')->warning("MD5 key didn't match for transaction, got @md5_in expected @md5_calc", array(
           '@md5_in' => $authkey,
           '@md5_calc' => $md5_key,
-        ), WATCHDOG_WARNING);
+        ));
       }
     }
   }
   else {
-    watchdog('dibs', 'Transaction not set in request data for OK callback, transaction #@tid.', array(
+    \Drupal::logger('dibs')->error('Transaction not set in request data for OK callback, transaction #@tid.', array(
       '@tid' => $transaction['tid'],
-    ), WATCHDOG_ERROR);
+    ));
   }
 }
 
@@ -599,6 +626,15 @@ function dibs_frontend_accept_page($transaction) {
   $settings = dibs_load_settings($transaction['api_module'], $transaction['api_delta']);
 
   // Returning the themed output
-  return theme('dibs_accept_page', array('settings' => $settings, 'transaction' => $transaction));
+  // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// return theme('dibs_accept_page', array('settings' => $settings, 'transaction' => $transaction));
+
 }
 

@@ -11,13 +11,21 @@
  * @return string
  */
 function dibs_admin_settings_list() {
-  drupal_add_css(drupal_get_path('module', 'dibs') .'/dibs.admin.css');
+  // @FIXME
+// The Assets API has totally changed. CSS, JavaScript, and libraries are now
+// attached directly to render arrays using the #attached property.
+// 
+// 
+// @see https://www.drupal.org/node/2169605
+// @see https://www.drupal.org/node/2408597
+// drupal_add_css(drupal_get_path('module', 'dibs') .'/dibs.admin.css');
+
 
   // Looping through all modules that implement the hook_dibsapi.
   $attributes['class'][] = 'dibs-admin-settings-list';
   $output = '<br />';
   $i = 0;
-  foreach ((array)module_implements('dibsapi') as $module) {
+  foreach ((array)\Drupal::moduleHandler()->getImplementations('dibsapi') as $module) {
     if ($i++ > 0) {
       $output .= '<p></p>';
     }
@@ -31,14 +39,26 @@ function dibs_admin_settings_list() {
 
     $rows = array();
     // Looping through deltas for a specific module implementation of hook_dibsapi)).
-    foreach ((array)module_invoke($module, 'dibsapi') as $delta => $info) {
-      $row = array(
-        array('data' => $info['info'], 'class' => ''),
-        array('data' => l(t('edit'), 'admin/config/payment/dibs/edit/' . $module . '/' . $delta), 'class' => ''),
-      );
+    foreach ((array)\Drupal::moduleHandler()->invoke($module, 'dibsapi') as $delta => $info) {
+      // @FIXME
+// l() expects a Url object, created from a route name or external URI.
+// $row = array(
+//         array('data' => $info['info'], 'class' => ''),
+//         array('data' => l(t('edit'), 'admin/config/payment/dibs/edit/' . $module . '/' . $delta), 'class' => ''),
+//       );
+
       $rows[] = $row;
     }
-    $output .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => $attributes));
+    // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $output .= theme('table', array('header' => $header, 'rows' => $rows, 'attributes' => $attributes));
+
   }
 
   return $output;
@@ -57,7 +77,7 @@ function dibs_admin_settings_list() {
  */
 function dibs_admin_settings_form($form, &$form_state, $module = NULL, $delta = NULL) {
   // Checking if the module and delta exists
-  $info = module_invoke($module, 'dibsapi', 'info', $delta);
+  $info = \Drupal::moduleHandler()->invoke($module, 'dibsapi', ['info', $delta]);
   if (empty($info) || !is_array($info)) {
     drupal_not_found();
     exit;
@@ -67,7 +87,14 @@ function dibs_admin_settings_form($form, &$form_state, $module = NULL, $delta = 
   $default = dibs_is_default($module, $delta);
 
   // Setting page title
-  drupal_set_title(t('Change DIBS implementation settings: @module > @delta', array('@module' => t($module), '@delta' => $info['info'])));
+  // @FIXME
+// drupal_set_title() has been removed. There are now a few ways to set the title
+// dynamically, depending on the situation.
+// 
+// 
+// @see https://www.drupal.org/node/2067859
+// drupal_set_title(t('Change DIBS implementation settings: @module > @delta', array('@module' => t($module), '@delta' => $info['info'])));
+
 
   // Loading settings
   $settings = dibs_load_settings($module, $delta, FALSE);
@@ -418,7 +445,7 @@ function dibs_admin_settings_form_validate($form, &$form_state) {
   $delta  = $form_state['values']['delta'];
 
   // Checking if the module and delta exists
-  $info = module_invoke($module, 'dibsapi', 'info', $delta);
+  $info = \Drupal::moduleHandler()->invoke($module, 'dibsapi', ['info', $delta]);
   if (empty($info) || !is_array($info) || empty($module) || empty($delta)) {
     drupal_not_found();
     exit;
@@ -472,7 +499,7 @@ function dibs_admin_settings_form_submit($form, &$form_state) {
   $callbacks      = $form_state['values']['callbacks'];
 
   // Checking if the module and delta exists
-  $info = module_invoke($module, 'dibsapi', 'info', $delta);
+  $info = \Drupal::moduleHandler()->invoke($module, 'dibsapi', ['info', $delta]);
   if (empty($info) || !is_array($info) || empty($module) || empty($delta)) {
     drupal_not_found();
     exit;
@@ -487,7 +514,12 @@ function dibs_admin_settings_form_submit($form, &$form_state) {
     'advanced' => $advanced,
     'callbacks' => $callbacks,
   );
-  variable_set('dibs_settings_' . $module . '_' . $delta, $settings);
+  // @FIXME
+// // @FIXME
+// // The correct configuration object could not be determined. You'll need to
+// // rewrite this call manually.
+// variable_set('dibs_settings_' . $module . '_' . $delta, $settings);
+
 
   // Saving order ID settings
   $result = db_query('

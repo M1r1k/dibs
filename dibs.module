@@ -87,8 +87,34 @@ function dibs_theme() {
 }
 
 /**
- * Implementation of hook_menu_alter().
+ * @FIXME
+ * hook_menu_alter() is gone in Drupal 8. You will have to port its
+ * functionality manually. The are several mechanisms for this:
+ *
+ * To alter routes, you must implement a route subscriber class. An empty one
+ * has been generated for you in src/Routing/RouteSubscriber.php.
+ *
+ * To alter menu link definitions, see hook_menu_links_discovered_alter(). An
+ * empty implementation has been created at the end of this file.
+ *
+ * To alter local task definitions, see hook_menu_local_tasks_alter(). An
+ * empty implementation has been created for you at the end of this file.
+ *
+ * To alter local actions, see hook_menu_local_actions_alter(). An
+ * empty implementation has been created for you at the end of this file.
+ *
+ * Contextual links are altered during rendering only. See
+ * hook_contextual_links_view_alter(). An empty implementation has been
+ * created for you at the end of this file.
+ *
+ * @see https://www.drupal.org/node/2118147#alter
+ * @see https://api.drupal.org/api/drupal/core%21lib%21Drupal%21Core%21Menu%21menu.api.php/function/hook_menu_links_discovered_alter/8
+ * @see https://api.drupal.org/api/drupal/core%21lib%21Drupal%21Core%21Menu%21menu.api.php/function/hook_menu_local_tasks_alter/8
+ * @see https://api.drupal.org/api/drupal/core%21lib%21Drupal%21Core%21Menu%21menu.api.php/function/hook_menu_local_actions_alter/8
+ * @see https://api.drupal.org/api/drupal/core%21modules%21contextual%21contextual.api.php/function/hook_contextual_links_view_alter/8
  */
+
+
 function dibs_menu_alter(&$items) {
   // Add a general payment config area, if none is present
   if (!isset($items['admin/config/payment'])) {
@@ -181,7 +207,7 @@ function dibs_menu() {
 function dibs_admin_user_access() {
   $args = func_get_args();
   foreach ((array)$args[0] as $perm) {
-    if (user_access($perm)) {
+    if (\Drupal::currentUser()->hasPermission($perm)) {
       return TRUE;
     }
   }
@@ -315,23 +341,40 @@ function dibs_get_next_order_id($module, $delta, $update_table = TRUE, $add_pref
  *  - If TRUE will we try to merge the settings array with the default one.
  */
 function dibs_load_settings($module, $delta, $fallback = TRUE) {
-  $settings = (array) variable_get('dibs_settings_' . $module . '_' . $delta, array());
+ // @FIXME
+ // The correct configuration object could not be determined. You'll need to
+ // rewrite this call manually.
+ // @FIXME
+// // @FIXME
+// // The correct configuration object could not be determined. You'll need to
+// // rewrite this call manually.
+// $settings = (array) variable_get('dibs_settings_' . $module . '_' . $delta, array());
+
+
 
   // Merge in default settings.
   if ($fallback && ($module != DIBS_DEFAULT_MODULE || $delta != DIBS_DEFAULT_DELTA)) {
-    $default_settings = variable_get('dibs_settings_' . DIBS_DEFAULT_MODULE . '_' . DIBS_DEFAULT_DELTA, array());
+ // The correct configuration object could not be determined. You'll need to
+ // rewrite this call manually.
+ // @FIXME
+// // @FIXME
+// // The correct configuration object could not be determined. You'll need to
+// // rewrite this call manually.
+// $default_settings = variable_get('dibs_settings_' . DIBS_DEFAULT_MODULE . '_' . DIBS_DEFAULT_DELTA, array());
+
+
 
     // Only overwrite empty values in the module/delta specific settings.
     foreach ((array) $default_settings as $group => $child) {
       if (is_array($child)) {
         foreach ($child as $key => $value) {
-          if (!isset($settings[$group][$key]) || (is_string($settings[$group][$key]) && drupal_strlen(trim($settings[$group][$key])) == 0)) {
+          if (!isset($settings[$group][$key]) || (is_string($settings[$group][$key]) && \Drupal\Component\Utility\Unicode::strlen(trim($settings[$group][$key])) == 0)) {
             $settings[$group][$key] = $value;
           }
         }
       }
       else {
-        if (drupal_strlen(trim($settings[$group])) == 0) {
+        if (\Drupal\Component\Utility\Unicode::strlen(trim($settings[$group])) == 0) {
           $settings[$group] = $child;
         }
       }
@@ -445,7 +488,7 @@ function dibs_transaction_hash_load($key = NULL) {
  *   be returned.
  */
 function dibs_payment_prepare($data, $redirect = TRUE) {
-  global $user;
+  $user = \Drupal::currentUser();
 
   // Checking required data in $data array
   if (empty($data['payment_price']) || (!is_numeric($data['payment_price']) && !is_float($data['payment_price'])) || $data['payment_price'] <= 0) {
@@ -457,7 +500,7 @@ function dibs_payment_prepare($data, $redirect = TRUE) {
     return '';
   }
   elseif (!empty($data['api_module']) && is_scalar($data['api_delta'])) {
-    $info = module_invoke($data['api_module'], 'dibsapi', 'info', $data['api_delta']);
+    $info = \Drupal::moduleHandler()->invoke($data['api_module'], 'dibsapi', ['info', $data['api_delta']]);
     if (empty($info) || !is_array($info)) {
       drupal_set_message(t('Error preparing the payment: api_module and/or api_delta is not valid!'), 'error');
       return '';
@@ -531,12 +574,12 @@ function dibs_payment_prepare($data, $redirect = TRUE) {
     'customer_phone' => $data['customer_phone'],
     'params' => serialize($data['params']),
   );
-  $transaction_status = drupal_write_record('dibs_transactions', $transaction);
+  $transaction_status = \Drupal::database()->insert('dibs_transactions')->fields($transaction)->execute();
 
   if ($transaction_status != SAVED_NEW) {
-    watchdog('dibs', 'Failed to save transaction to database, error code #@code.', array(
+    \Drupal::logger('dibs')->error('Failed to save transaction to database, error code #@code.', array(
       '@code' => db_error(),
-    ), WATCHDOG_ERROR);
+    ));
   }
 
   // Saving new api_hash in session
@@ -602,7 +645,7 @@ function dibs_create_price_line_fields($data) {
     $i = 1;
     $keys = array();
     foreach ($data as $key => $value) {
-      $field = 'priceinfo' . $i . '.' . drupal_ucfirst($key);
+      $field = 'priceinfo' . $i . '.' . \Drupal\Component\Utility\Unicode::ucfirst($key);
       $keys[] = $field;
       $form[$field] = array(
         '#type' => 'hidden',
@@ -634,7 +677,7 @@ function dibs_create_delivery_line_fields($data) {
     foreach ($data as $key => $value) {
       if (strpos($key, 'customer_') !== FALSE && !empty($value)) {
         $key = str_replace('customer_', '', $key);
-        $field = 'delivery' . $i . '.' . drupal_ucfirst($key);
+        $field = 'delivery' . $i . '.' . \Drupal\Component\Utility\Unicode::ucfirst($key);
         $keys[] = $field;
         $form[$field] = array(
           '#type' => 'hidden',
@@ -728,22 +771,26 @@ function dibs_capture_transaction($api_module, $api_delta, $transaction) {
   if ($settings['general']['md5']) {
     $data['md5key'] = md5($settings['general']['md5_key2'] . md5($settings['general']['md5_key1'] . 'merchant=' . $data['merchant'] . '&orderid=' . $data['orderid'] . '&transact=' . $data['transact'] . '&amount=' . $data['amount']));
   }
-  $response = drupal_http_request(url(DIBS_CAPTURE_URL, array('query' => $data, 'absolute' => TRUE)));
+ // @FIXME
+// url() expects a route name or an external URI.
+// $response = drupal_http_request(url(DIBS_CAPTURE_URL, array('query' => $data, 'absolute' => TRUE)));
+
+
   $result = array();
   if (trim($response->data) == 'MD5 checksum is not correct') {
     $result['status'] = FALSE;
     $result['code'] = 'MD5';
     $result['data'] = $response->data;
-    watchdog('dibs', "MD5 key calculated for capture did not match for transaction @transaction. MD5 key calculated to @md5." , array(
+    \Drupal::logger('dibs')->critical("MD5 key calculated for capture did not match for transaction @transaction. MD5 key calculated to @md5.", array(
       '@transaction' => $transaction,
       '@md5' => $data['md5key'],
-    ), WATCHDOG_CRITICAL);
+    ));
   }
   elseif (strpos($response->data, 'status=ACCEPTED') !== FALSE) {
     $result['status'] = TRUE;
-    watchdog('dibs', "Transaction @transaction has been successfully been captured at DIBS." , array(
+    \Drupal::logger('dibs')->info("Transaction @transaction has been successfully been captured at DIBS.", array(
       '@transaction' => $transaction,
-    ), WATCHDOG_INFO);
+    ));
   }
   elseif (strpos($response->data, 'status=DECLINED') !== FALSE) {
     foreach (explode('&', $response->data) as $code) {
@@ -760,16 +807,16 @@ function dibs_capture_transaction($api_module, $api_delta, $transaction) {
     $error_codes = dibs_error_codes();
     if (!empty($error_codes[$error_code])) {
       $result['error_code'] = $error_codes[$error_code];
-      watchdog('dibs', "DIBS declined to capture payment with transaction id @transaction error_code: @error_code." , array(
+      \Drupal::logger('dibs')->critical("DIBS declined to capture payment with transaction id @transaction error_code: @error_code.", array(
         '@transaction' => $transaction,
         '@error_code' => $result['error_code'],
-      ), WATCHDOG_CRITICAL);
+      ));
     }
     else {
-      watchdog('dibs', "Unknown error when trying to capture DIBS payment with transaction id @transaction response: @response." , array(
+      \Drupal::logger('dibs')->critical("Unknown error when trying to capture DIBS payment with transaction id @transaction response: @response.", array(
         '@transaction' => $transaction,
         '@response' => $response->data,
-      ), WATCHDOG_CRITICAL);
+      ));
       $result['error_code'] = 'Unknown';
     }
   }
@@ -778,10 +825,10 @@ function dibs_capture_transaction($api_module, $api_delta, $transaction) {
     $result['code'] = 'Unknown';
     $result['data'] = $response->data;
     $result['error_code'] = 'Unknown';
-    watchdog('dibs', "Unknown error when trying to capture DIBS payment with transaction id @transaction response: @response." , array(
+    \Drupal::logger('dibs')->critical("Unknown error when trying to capture DIBS payment with transaction id @transaction response: @response.", array(
       '@transaction' => $transaction,
       '@response' => $response->data,
-    ), WATCHDOG_CRITICAL);
+    ));
   }
   return $result;
 }
