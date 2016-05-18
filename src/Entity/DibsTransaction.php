@@ -105,6 +105,8 @@ class DibsTransaction extends ContentEntityBase implements DibsTransactionInterf
       ->setLabel(t('Transaction total amount'));
     $fields['hash'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Transaction HASH'));
+    $fields['status'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Transaction HASH'));
     $fields['order_id'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Order ID'));
     $fields['currency'] = BaseFieldDefinition::create('string')

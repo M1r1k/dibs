@@ -5,3 +5,14 @@ general:
   type: 'flex'
   lang: 'en'
   currency: '978'
+  retry_handling: 'new_order_id'
+flexwindow:
+  color: 'blue'
+  decorator: 'default'
+  voucher: false
+mobilewindow:
+  paytypes: []
+callbacks:
+  accepturl: ''
+  cancelurl: ''
+  callback: ''

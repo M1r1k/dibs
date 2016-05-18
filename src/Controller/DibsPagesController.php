@@ -19,6 +19,9 @@ class DibsPagesController extends ControllerBase {
    *   Return Hello string.
    */
   public function accept($transaction_hash) {
+    $transaction = DibsTransaction::loadByHash($transaction_hash);
+    $transaction->set('status', 'ACCEPTED')->save();
+    // @todo fire event about transaction accepting.
     return [
       '#type' => 'markup',
       '#markup' => $this->t('Implement method: accept with parameter(s): $transaction'),

@@ -41,7 +41,7 @@ class DibsRedirectForm extends FormBase {
     ];
     $form['windowtype'] = [
       '#type' => 'hidden',
-      '#value' => 'mobile',
+      '#value' => $config->get('general.type'),
     ];
     $form['currency'] = [
       '#type' => 'hidden',

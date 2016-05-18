@@ -62,6 +62,11 @@ function dibs_schema() {
         'length' => 255,
         'description' => t('The customers email'),
       ),
+      'status' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'description' => t('The customers email'),
+      ),
       'currency' => array(
         'type' => 'varchar',
         'length' => 3,

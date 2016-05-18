@@ -73,7 +73,17 @@ class DibsSettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('general.type'),
       '#description' => $this->t('If enabled, DIBS will make some extra checks on the sent data, to be sure that no one manipulated it. If enabled should the keys below be filled in!'),
     ];
-
+    $form['general']['retry_handling'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Order id handling after cancel'),
+      '#options' => [
+        'new_order_id' => $this->t('Generate a new order id'),
+        'add_retry_suffix' => $this->t('Add retry suffix'),
+      ],
+      '#default_value' => $config->get('general.retry_handling'),
+      '#description' => $this->t('How the order id should be handled when the user retries a cancelled payment. Some card providers (edankort) require a new order ID after cancellation.'),
+    ];
+    // @todo add md5 and HMAC checking.
     $form['general']['lang'] = [
       '#type' => 'select',
       '#title' => $this->t('Language'),
@@ -115,6 +125,96 @@ class DibsSettingsForm extends ConfigFormBase {
       '#required' => TRUE,
       '#default_value' => $config->get('general.currency'),
       '#description' => $this->t('Currency code for the currency used when paying.'),
+    ];
+
+    // @todo migrate payment window settings.
+
+    $form['flexwindow'] = [
+      '#type' => 'fieldset',
+      '#title' => t('Flex Window settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#tree' => TRUE,
+    ];
+
+    $form['flexwindow']['color'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Color theme'),
+      '#options' => [
+        'sand' => $this->t('Sand'),
+        'grey' => $this->t('Grey'),
+        'blue' => $this->t('Blue'),
+      ],
+      '#default_value' => $config->get('flexwindow.color'),
+      '#description' => $this->t('The color theme for the DIBS popup window.'),
+    ];
+
+    $form['flexwindow']['decorator'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Decorator'),
+      '#options' => [
+        'default' => $this->t('Default'),
+        'basal' => $this->t('Basal'),
+        'rich' => $this->t('Rich'),
+        'custom' => $this->t('Custom'),
+      ],
+      '#default_value' => $config->get('flexwindow.decorator'),
+      '#description' => $this->t('Choose what DIBS decorator to use. If you want to use the one configured in the DIBS administration, please then choose "Custom".'),
+    ];
+    $form['flexwindow']['voucher'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Voucher'),
+      '#default_value' => $config->get('flexwindow.voucher'),
+      '#description' => $this->t('If set to Yes, then the list of payment types on the first page of FlexWin will contain vouchers, too.'),
+    ];
+
+    $form['mobilewindow'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Mobile Window settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#tree' => TRUE,
+    ];
+    $form['mobilewindow']['paytypes'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Select'),
+      '#multiple' => TRUE,
+      '#description' => $this->t('The description appears usually below the item.'),
+      '#options' => array(
+        'MC' => $this->t('Master Carx'),
+        'VISA' => $this->t('VISA card'),
+        'ELEC' => $this->t('VISA Electron'),
+        'AMEX' => $this->t('American Express'),
+        'DK' => $this->t('Dankort'),
+        'V-DK' => $this->t('VISA/Dankort'),
+      ),
+      '#default_value' => $config->get('mobilewindow.paytypes'),
+    ];
+
+    $form['callbacks'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Callback URLs'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#tree' => TRUE,
+    ];
+    $form['callbacks']['accepturl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Accept URL'),
+      '#description' => $this->t('The URL that DIBS should call after a transaction has been accepted.'),
+      '#default_value' => $config->get('callbacks.accepturl'),
+    ];
+    $form['callbacks']['cancelurl'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Cancel URL'),
+      '#description' => $this->t('The URL that DIBS should call after a transaction has been canceled by the user.'),
+      '#default_value' => $config->get('callbacks.cancelurl'),
+    ];
+    $form['callbacks']['callback'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Callback URL'),
+      '#description' => $this->t('The URL that DIBS should call to validate that a transaction is OK.'),
+      '#default_value' => $config->get('callbacks.callback'),
     ];
 
     return parent::buildForm($form, $form_state);
