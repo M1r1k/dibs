@@ -62,15 +62,6 @@ class DibsPagesController extends ControllerBase {
   }
 
   public function redirectForm($transaction_hash) {
-//    DibsTransaction::create([
-//      'amount' => 123123123,
-//      'order_id' => '123123a123sd',
-//      'currency' => '978',
-//      'email' => 'example123@example.com',
-//      'billing_address' => 'address line 1',
-//      'billing_first_name' => 'first name',
-//      'test' => 1
-//    ])->save();
     $transaction = DibsTransaction::loadByHash($transaction_hash);
 
     $form = \Drupal::service('form_builder')->getForm(DibsRedirectForm::class, ['transaction' => $transaction]);

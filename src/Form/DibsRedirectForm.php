@@ -25,6 +25,7 @@ class DibsRedirectForm extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config('dibs.settings');
+    $form['#action'] = 'https://payment.architrade.com/paymentweb/start.action';
     $transaction = $form_state->getBuildInfo()['args'][0]['transaction'];
     $form['amount'] = [
       '#type' => 'hidden',
@@ -32,7 +33,15 @@ class DibsRedirectForm extends FormBase {
     ];
     $form['accepturl'] = [
       '#type' => 'hidden',
-      '#value' => 'payment/dibs/accept'
+      '#value' => $this->getUrlGenerator()->generateFromRoute('dibs.dibs_pages_controller_accept', ['transaction_hash' => $transaction->hash->value], ['absolute' => TRUE])
+    ];
+    $form['callbackurl'] = [
+      '#type' => 'hidden',
+      '#value' => $this->getUrlGenerator()->generateFromRoute('dibs.dibs_pages_controller_callback', ['transaction_hash' => $transaction->hash->value], ['absolute' => TRUE]),
+    ];
+    $form['windowtype'] = [
+      '#type' => 'hidden',
+      '#value' => 'mobile',
     ];
     $form['currency'] = [
       '#type' => 'hidden',
@@ -45,6 +54,18 @@ class DibsRedirectForm extends FormBase {
     $form['orderid'] = [
       '#type' => 'hidden',
       '#value' => $transaction->order_id->value,
+    ];
+    $form['test'] = [
+      '#type' => 'hidden',
+      '#value' => $config->get('general.test_mode'),
+    ];
+    $form['lang'] = [
+      '#type' => 'hidden',
+      '#value' => 'en',
+    ];
+    $form['paytype'] = [
+      '#type' => 'hidden',
+      '#value' => 'VISA',
     ];
     $form['submit'] = [
       '#type' => 'submit',
