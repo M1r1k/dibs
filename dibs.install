@@ -62,6 +62,11 @@ function dibs_schema() {
         'length' => 255,
         'description' => t('The customers email'),
       ),
+      'lang' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'description' => t('The customers email'),
+      ),
       'status' => array(
         'type' => 'varchar',
         'length' => 255,
@@ -105,11 +110,6 @@ function dibs_schema() {
       'billing_last_name' => [
         'type' => 'varchar',
         'length' => 64,
-        'description' => t('The customers phone'),
-      ],
-      'test' => [
-        'type' => 'int',
-        'size' => 'tiny',
         'description' => t('The customers phone'),
       ],
       'created' => [

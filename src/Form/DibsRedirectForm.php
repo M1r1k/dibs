@@ -200,4 +200,10 @@ class DibsRedirectForm extends FormBase {
     return $form;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function submitForm(array &$form, FormStateInterface $form_state) {
+    // Nothing to do because we redirect form to DIBS.
+  }
 }

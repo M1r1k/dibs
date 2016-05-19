@@ -4,7 +4,11 @@ namespace Drupal\dibs\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\dibs\Entity\DibsTransaction;
+use Drupal\dibs\Event\AcceptTransactionEvent;
+use Drupal\dibs\Event\DibsEvents;
 use Drupal\dibs\Form\DibsRedirectForm;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\File\Exception\AccessDeniedException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -14,6 +18,23 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * @package Drupal\dibs\Controller
  */
 class DibsPagesController extends ControllerBase {
+
+  /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface  */
+  protected $eventDispatcher;
+
+  public function __construct(EventDispatcherInterface $event_dispatcher) {
+    $this->eventDispatcher = $event_dispatcher;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('event_dispatcher')
+    );
+  }
+
   /**
    * Accept.
    *
@@ -27,11 +48,11 @@ class DibsPagesController extends ControllerBase {
       throw new NotFoundHttpException($this->t('Transaction with given hash was not found.'));
     }
 
-    $transaction->set('status', 'ACCEPTED')->save();
-    // @todo fire event about transaction accepting.
+    $this->eventDispatcher->dispatch(DibsEvents::ACCEPT_TRANSACTION, new AcceptTransactionEvent($transaction));
+
     return [
-      '#type' => 'markup',
-      '#markup' => $this->t('Implement method: accept with parameter(s): $transaction'),
+      '#theme' => 'dibs_accept_page',
+      '#transaction' => $transaction,
     ];
   }
   /**
@@ -85,10 +106,10 @@ class DibsPagesController extends ControllerBase {
     $form = \Drupal::service('form_builder')->getForm(DibsRedirectForm::class, ['transaction' => $transaction]);
 
     return [
-      $form,
-      [
-        '#markup' => '<script type="text/javascript">alert("Form is ready to be submitted")</script>'
-      ],
+      '#theme' => 'dibs_redirect_page',
+      '#form' => $form,
+      '#transaction' => $transaction,
+      '#inline_script' => '<script type="text/javascript">document.getElementById("dibs-redirect-form").submit()</script>',
       '#cache' => [
         'max-age' => 0,
       ],

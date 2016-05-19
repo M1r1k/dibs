@@ -17,34 +17,25 @@ define('DIBS_CAPTURE_URL', 'https://payment.architrade.com/cgi-bin/capture.cgi')
 /**
  * Implementation of hook_theme().
  */
-function _dibs_theme() {
-  $themes = array();
-  $themes['dibs_redirect_page'] = array(
-    'variables' => array(
-        'form' => NULL,
-        'settings' => NULL,
-        'transaction' => NULL
-    ),
-    'template' => 'dibs-redirect-page',
-  );
-  $themes['dibs_cancel_page'] = array(
-    'variables' => array(
+function dibs_theme() {
+  $themes['dibs_redirect_page'] = [
+    'variables' => [
       'form' => NULL,
-      'settings' => NULL,
+      'inline_script' => NULL,
       'transaction' => NULL
-    ),
-    'template' => 'dibs-cancel-page',
-  );
+    ],
+  ];
+  $themes['dibs_cancel_page'] = [
+    'variables' => [
+      'transaction' => NULL
+    ],
+  ];
   $themes['dibs_accept_page'] = array(
     'variables' => array(
-      'settings' => NULL,
       'transaction' => NULL
     ),
-    'template' => 'dibs-accept-page',
   );
-  $themes['dibs_redirect_form'] = array(
-    'variables' => array('element' => NULL),
-  );
+
   return $themes;
 }
 
@@ -557,39 +548,6 @@ function dibs_create_delivery_line_fields($data) {
     );
   }
   return $form;
-}
-
-/**
- * Preprocess function for the dibs_redirect_page theme
- *
- * @param array $variables
- */
-function template_preprocess_dibs_redirect_page(&$variables) {
-  $transaction = $variables['transaction'];
-  $variables['theme_hook_suggestions'][] = 'dibs_redirect_page__' . $transaction['api_module'];
-  $variables['theme_hook_suggestions'][] = 'dibs_redirect_page__' . $transaction['api_module'] . '__' . $transaction['api_delta'];
-}
-
-/**
- * Preprocess function for the dibs_cancel_page theme
- *
- * @param array $variables
- */
-function template_preprocess_dibs_cancel_page(&$variables) {
-  $transaction = $variables['transaction'];
-  $variables['theme_hook_suggestions'][] = 'dibs_cancel_page__' . $transaction['api_module'];
-  $variables['theme_hook_suggestions'][] = 'dibs_cancel_page__' . $transaction['api_module'] . '__' . $transaction['api_delta'];
-}
-
-/**
- * Preprocess function for the dibs_accept_page theme
- *
- * @param array $variables
- */
-function template_preprocess_dibs_accept_page(&$variables) {
-  $transaction = $variables['transaction'];
-  $variables['theme_hook_suggestions'][] = 'dibs_accept_page__' . $transaction['api_module'];
-  $variables['theme_hook_suggestions'][] = 'dibs_accept_page__' . $transaction['api_module'] . '__' . $transaction['api_delta'];
 }
 
 /**
