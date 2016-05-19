@@ -3,9 +3,12 @@
 namespace Drupal\dibs\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\dibs\Entity\DibsTransaction;
 use Drupal\dibs\Event\AcceptTransactionEvent;
+use Drupal\dibs\Event\CancelTransactionEvent;
 use Drupal\dibs\Event\DibsEvents;
+use Drupal\dibs\Form\DibsCancelForm;
 use Drupal\dibs\Form\DibsRedirectForm;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -22,8 +25,12 @@ class DibsPagesController extends ControllerBase {
   /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface  */
   protected $eventDispatcher;
 
-  public function __construct(EventDispatcherInterface $event_dispatcher) {
+  /** @var  FormBuilderInterface */
+  protected $formBuilder;
+
+  public function __construct(EventDispatcherInterface $event_dispatcher, FormBuilderInterface $form_builder) {
     $this->eventDispatcher = $event_dispatcher;
+    $this->formBuilder = $form_builder;
   }
 
   /**
@@ -31,7 +38,8 @@ class DibsPagesController extends ControllerBase {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('event_dispatcher')
+      $container->get('event_dispatcher'),
+      $container->get('form_builder')
     );
   }
 
@@ -86,9 +94,23 @@ class DibsPagesController extends ControllerBase {
    *   Return Hello string.
    */
   public function callback($transaction_hash) {
+    $transaction = DibsTransaction::loadByHash($transaction_hash);
+
+    if (!$transaction) {
+      throw new NotFoundHttpException($this->t('Transaction with given hash was not found.'));
+    }
+
+    if ($transaction->status->value != 'CREATED') {
+      throw new AccessDeniedException($this->t('Given transaction was already processed.'));
+    }
+
+    $this->eventDispatcher->dispatch(DibsEvents::CANCEL_TRANSACTION, new CancelTransactionEvent($transaction));
+    $form = $this->formBuilder->getForm(DibsCancelForm::class, ['transaction' => $transaction]);
+
     return [
-      '#type' => 'markup',
-      '#markup' => $this->t('Implement method: callback with parameter(s): $transaction'),
+      '#theme' => 'dibs_cancel_page',
+      '#transaction' => $transaction,
+      '#form' => $form,
     ];
   }
 
@@ -103,7 +125,7 @@ class DibsPagesController extends ControllerBase {
       throw new AccessDeniedException($this->t('Given transaction was already processed.'));
     }
 
-    $form = \Drupal::service('form_builder')->getForm(DibsRedirectForm::class, ['transaction' => $transaction]);
+    $form = $this->formBuilder->getForm(DibsRedirectForm::class, ['transaction' => $transaction]);
 
     return [
       '#theme' => 'dibs_redirect_page',

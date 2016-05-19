@@ -4,57 +4,6 @@
  * Front end functions for the DIBS module
  */
 
-/**
- * The cancel page where the user has the possibility to go back to the
- * payment again
- *
- * @param array $transaction
- *
- * @return string
- */
-function dibs_frontend_cancel_page($transaction) {
-  $transaction['payment_price'] = (float)$transaction['payment_price'];
-
-  // Making some checks to check if the transaction is valid
-  if (!empty($transaction['api_module']) && is_scalar($transaction['api_delta'])) {
-    $info = \Drupal::moduleHandler()->invoke($transaction['api_module'], 'dibsapi', ['info', $transaction['api_delta']]);
-    if (empty($info) || !is_array($info)) {
-      drupal_set_message(t('Error redirecting to DIBS: api_module and/or api_delta is not valid!'), 'error');
-      return '';
-    }
-  }
-  elseif (!empty($transaction['api_module']) || is_scalar($transaction['api_delta'])) {
-    drupal_set_message(t('Error redirecting to DIBS: api_module or api_delta is missing!'), 'error');
-    return '';
-  }
-  elseif ($transaction['payment_status'] > 0) {
-    drupal_set_message(t('Error redirecting to DIBS: the payment has already made!'), 'error');
-    return '';
-  }
-
-  // Invoking the module that implemented the payment
-  $function = $transaction['api_module'] . '_dibsapi';
-  if (function_exists($function)) {
-    $function('transaction_cancel', $transaction['api_delta'], $transaction);
-  }
-
-  // Loading settings
-  $settings = dibs_load_settings($transaction['api_module'], $transaction['api_delta']);
-
-  // Getting redirect form
-  $form = \Drupal::formBuilder()->getForm('dibs_frontend_cancel_form', $settings, $transaction);
-
-  // @FIXME
-// theme() has been renamed to _theme() and should NEVER be called directly.
-// Calling _theme() directly can alter the expected output and potentially
-// introduce security issues (see https://www.drupal.org/node/2195739). You
-// should use renderable arrays instead.
-// 
-// 
-// @see https://www.drupal.org/node/2195739
-// return theme('dibs_cancel_page', array('form' => $form, 'settings' => $settings, 'transaction' => $transaction));
-
-}
 
 /**
  * Form builder; Building the cancel form

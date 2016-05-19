@@ -63,6 +63,7 @@ class DibsTransaction extends ContentEntityBase implements DibsTransactionInterf
    * @return self
    */
   public static function loadByHash($hash) {
+    // @todo move it to dedicated storage handler to simplify tests.
     $entity_manager = \Drupal::entityManager();
     $result = $entity_manager->getStorage($entity_manager->getEntityTypeFromClass(get_called_class()))
       ->getQuery()
@@ -130,12 +131,13 @@ class DibsTransaction extends ContentEntityBase implements DibsTransactionInterf
       ->setLabel(t('The customers billing postal code'));
     $fields['billing_postal_place'] = BaseFieldDefinition::create('string')
       ->setLabel(t('The customers billing postal place(city or town)'));
+    $fields['retry_count'] = BaseFieldDefinition::create('integer')
+      ->setLabel(t('Payment retry count'));
     $fields['lang'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Language implementation for transaction'));
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(t('Created'))
       ->setDescription(t('The time that the entity was created.'));
-
     $fields['changed'] = BaseFieldDefinition::create('changed')
       ->setLabel(t('Changed'))
       ->setDescription(t('The time that the entity was last edited.'));
