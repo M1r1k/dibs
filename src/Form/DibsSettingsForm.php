@@ -129,6 +129,26 @@ class DibsSettingsForm extends ConfigFormBase {
 
     // @todo migrate payment window settings.
 
+    $form['paymentwindow'] = [
+      '#type' => 'fieldset',
+      '#title' => t('Flex Window settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#tree' => TRUE,
+    ];
+
+    $form['paymentwindow']['color'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Color theme'),
+      '#options' => [
+        'sand' => $this->t('Sand'),
+        'grey' => $this->t('Grey'),
+        'blue' => $this->t('Blue'),
+      ],
+      '#default_value' => $config->get('paymentwindow.color'),
+      '#description' => $this->t('The color theme for the DIBS payment window.'),
+    ];
+
     $form['flexwindow'] = [
       '#type' => 'fieldset',
       '#title' => t('Flex Window settings'),

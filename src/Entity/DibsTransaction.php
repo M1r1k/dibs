@@ -132,7 +132,8 @@ class DibsTransaction extends ContentEntityBase implements DibsTransactionInterf
       ->setLabel(t('The customers billing postal place(city or town)'));
     $fields['test'] = BaseFieldDefinition::create('boolean')
       ->setLabel(t('The test transaction'));
-
+    $fields['lang'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('Language implementation for transaction'));
     $fields['created'] = BaseFieldDefinition::create('created')
       ->setLabel(t('Created'))
       ->setDescription(t('The time that the entity was created.'));

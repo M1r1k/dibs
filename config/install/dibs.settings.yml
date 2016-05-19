@@ -6,6 +6,8 @@ general:
   lang: 'en'
   currency: '978'
   retry_handling: 'new_order_id'
+paymentwindow:
+  color: 'blue'
 flexwindow:
   color: 'blue'
   decorator: 'default'

@@ -27,6 +27,13 @@ dibs.settings:
         retry_handling:
           type: string
           label: 'How to handle payment retry'
+    paymentwindow:
+      type: mapping
+      label: 'DIBS payment window settings'
+      mapping:
+        color:
+          type: string
+          label: 'Background color'
     flexwindow:
       type: mapping
       label: 'DIBS flexwindow settings'
