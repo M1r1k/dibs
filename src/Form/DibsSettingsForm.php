@@ -175,7 +175,7 @@ class DibsSettingsForm extends ConfigFormBase {
       '#collapsed' => TRUE,
       '#tree' => TRUE,
     ];
-    $form['mobilewindow']['paytypes'] = [
+    $form['mobilewindow']['payment_types'] = [
       '#type' => 'select',
       '#title' => $this->t('Select'),
       '#multiple' => TRUE,
@@ -188,7 +188,7 @@ class DibsSettingsForm extends ConfigFormBase {
         'DK' => $this->t('Dankort'),
         'V-DK' => $this->t('VISA/Dankort'),
       ),
-      '#default_value' => $config->get('mobilewindow.paytypes'),
+      '#default_value' => $config->get('mobilewindow.payment_types'),
     ];
 
     $form['callbacks'] = [
@@ -198,13 +198,13 @@ class DibsSettingsForm extends ConfigFormBase {
       '#collapsed' => TRUE,
       '#tree' => TRUE,
     ];
-    $form['callbacks']['accepturl'] = [
+    $form['callbacks']['accept_url'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Accept URL'),
       '#description' => $this->t('The URL that DIBS should call after a transaction has been accepted.'),
       '#default_value' => $config->get('callbacks.accepturl'),
     ];
-    $form['callbacks']['cancelurl'] = [
+    $form['callbacks']['cancel_url'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Cancel URL'),
       '#description' => $this->t('The URL that DIBS should call after a transaction has been canceled by the user.'),
@@ -217,6 +217,34 @@ class DibsSettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('callbacks.callback'),
     ];
 
+    $form['advanced'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Advanced settings'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+      '#tree' => TRUE,
+    ];
+
+    $form['advanced']['calculate_fee'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Calculate fee'),
+      '#description' => $this->t('If enabled, the Payment Window will automatically affix the charge due to the transaction, i.e. the charge payable to the acquirer (e.g. PBS), and display this to the customer.'),
+      '#default_value' => $config->get('advanced.calculate_fee'),
+    ];
+
+    $form['advanced']['capture_now'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Capture now'),
+      '#description' => $this->t('If enabled, the amount is immediately transferred from the customers account to the shop\'s account . This function can only be utilized in the event that there is no actual physical delivery of any items.'),
+      '#default_value' => $config->get('advanced.capture_now'),
+    ];
+    $form['advanced']['unique_order_id'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Unique order ID'),
+      '#description' => $this->t('If enabled, the order ID must be unique, i.e. there is no existing transaction with DIBS with the same order ID. If such a transaction already exists, payment will be rejected with reason=7.'),
+      '#default_value' => $config->get('advanced.unique_order_id'),
+    ];
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -224,6 +252,7 @@ class DibsSettingsForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
+    // @todo validate md5 keys and order prefixes&suffixes.
     parent::validateForm($form, $form_state);
   }
 
@@ -240,6 +269,17 @@ class DibsSettingsForm extends ConfigFormBase {
       ->set('general.type', $form_state->getValue('general')['type'])
       ->set('general.lang', $form_state->getValue('general')['lang'])
       ->set('general.currency', $form_state->getValue('general')['currency'])
+      ->set('general.retry_handling', $form_state->getValue('general')['retry_handling'])
+      ->set('flexwindow.color', $form_state->getValue('flexwindow')['color'])
+      ->set('flexwindow.decorator', $form_state->getValue('flexwindow')['decorator'])
+      ->set('flexwindow.voucher', $form_state->getValue('flexwindow')['voucher'])
+      ->set('mobilewindow.payment_types', $form_state->getValue('mobilewindow')['payment_types'])
+      ->set('callbacks.accept_url', $form_state->getValue('callbacks')['accept_url'])
+      ->set('callbacks.cancel_url', $form_state->getValue('callbacks')['cancel_url'])
+      ->set('callbacks.callback', $form_state->getValue('callbacks')['callback'])
+      ->set('advanced.calculate_fee', $form_state->getValue('advanced')['calculate_fee'])
+      ->set('advanced.capture_now', $form_state->getValue('advanced')['capture_now'])
+      ->set('advanced.unique_order_id', $form_state->getValue('advanced')['unique_order_id'])
       ->save();
   }
 

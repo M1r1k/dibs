@@ -35,6 +35,10 @@ class DibsRedirectForm extends FormBase {
       '#type' => 'hidden',
       '#value' => $this->getUrlGenerator()->generateFromRoute('dibs.dibs_pages_controller_accept', ['transaction_hash' => $transaction->hash->value], ['absolute' => TRUE])
     ];
+    $form['cancelurl'] = [
+      '#type' => 'hidden',
+      '#value' => $this->getUrlGenerator()->generateFromRoute('dibs.dibs_pages_controller_cancel', ['transaction_hash' => $transaction->hash->value], ['absolute' => TRUE])
+    ];
     $form['callbackurl'] = [
       '#type' => 'hidden',
       '#value' => $this->getUrlGenerator()->generateFromRoute('dibs.dibs_pages_controller_callback', ['transaction_hash' => $transaction->hash->value], ['absolute' => TRUE]),
@@ -59,14 +63,46 @@ class DibsRedirectForm extends FormBase {
       '#type' => 'hidden',
       '#value' => $config->get('general.test_mode'),
     ];
+    if ($config->get('general.account')) {
+      $form['account'] = [
+        '#type' => 'hidden',
+        '#value' => $config->get('general.account'),
+      ];
+    }
+    if ($config->get('flexwindow.decorator')) {
+      $form['decorator'] = [
+        '#type' => 'hidden',
+        '#value' => $config->get('flexwindow.decorator'),
+      ];
+    }
+    if ($config->get('flexwindow.voucher')) {
+      $form['voucher'] = [
+        '#type' => 'hidden',
+        '#value' => 'yes',
+      ];
+    }
     $form['lang'] = [
       '#type' => 'hidden',
-      '#value' => 'en',
+      '#value' => $config->get('general.lang'),
     ];
-    $form['paytype'] = [
-      '#type' => 'hidden',
-      '#value' => 'VISA',
-    ];
+    if ($config->get('mobilewindow.payment_types')) {
+      $form['payment_type'] = [
+        '#type' => 'hidden',
+        '#value' => implode(',', $config->get('mobilewindow.payment_types')),
+      ];
+    }
+    if ($config->get('advanced.capture_now')) {
+      $form['capturenow'] = [
+        '#type' => 'hidden',
+        '#value' => $config->get('advanced.capture_now'),
+      ];
+    }
+    if ($config->get('advanced.unique_order_id')) {
+      $form['uniqueoid'] = [
+        '#type' => 'hidden',
+        '#value' => $config->get('advanced.unique_order_id'),
+      ];
+    }
     $form['submit'] = [
       '#type' => 'submit',
       '#value' => 'submit',

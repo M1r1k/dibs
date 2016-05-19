@@ -49,74 +49,10 @@ function _dibs_theme() {
 }
 
 /**
- * @FIXME
- * hook_menu_alter() is gone in Drupal 8. You will have to port its
- * functionality manually. The are several mechanisms for this:
- *
- * To alter routes, you must implement a route subscriber class. An empty one
- * has been generated for you in src/Routing/RouteSubscriber.php.
- *
- * To alter menu link definitions, see hook_menu_links_discovered_alter(). An
- * empty implementation has been created at the end of this file.
- *
- * To alter local task definitions, see hook_menu_local_tasks_alter(). An
- * empty implementation has been created for you at the end of this file.
- *
- * To alter local actions, see hook_menu_local_actions_alter(). An
- * empty implementation has been created for you at the end of this file.
- *
- * Contextual links are altered during rendering only. See
- * hook_contextual_links_view_alter(). An empty implementation has been
- * created for you at the end of this file.
- *
- * @see https://www.drupal.org/node/2118147#alter
- * @see https://api.drupal.org/api/drupal/core%21lib%21Drupal%21Core%21Menu%21menu.api.php/function/hook_menu_links_discovered_alter/8
- * @see https://api.drupal.org/api/drupal/core%21lib%21Drupal%21Core%21Menu%21menu.api.php/function/hook_menu_local_tasks_alter/8
- * @see https://api.drupal.org/api/drupal/core%21lib%21Drupal%21Core%21Menu%21menu.api.php/function/hook_menu_local_actions_alter/8
- * @see https://api.drupal.org/api/drupal/core%21modules%21contextual%21contextual.api.php/function/hook_contextual_links_view_alter/8
- */
-
-
-function _dibs_menu_alter(&$items) {
-  // Add a general payment config area, if none is present
-  if (!isset($items['admin/config/payment'])) {
-    $items['admin/config/payment'] = array(
-      'title' => 'Payment',
-      'description' => 'Payment integration modules.',
-      'position' => 'right',
-      'weight' => -10,
-      'page callback' => 'system_admin_menu_block_page',
-      'access arguments' => array('access administration pages'),
-      'file' => 'system.admin.inc',
-      'file path' => drupal_get_path('module', 'system'),
-    );
-  }
-}
-
-/**
  * Implementation of hook_menu().
  */
 function _dibs_menu() {
   $items = array();
-
-  // Settings pages
-  $items['admin/config/payment/dibs'] = array(
-    'page callback' => 'dibs_admin_settings_list',
-    'title' => 'DIBS settings',
-    'description' => 'Configure DIBS payment gateway.',
-    'weight' => 1,
-    'type' => MENU_NORMAL_ITEM,
-    'access arguments' => array('administer dibs settings'),
-    'file' => 'dibs.admin.inc',
-  );
-  $items['admin/config/payment/dibs/edit/%/%'] = array(
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('dibs_admin_settings_form', 5, 6),
-    'title' => 'Change DIBS implementation settings',
-    'type' => MENU_CALLBACK,
-    'access arguments' => array('administer dibs settings'),
-    'file' => 'dibs.admin.inc',
-  );
 
   // Front end pages
   $items['payment/dibs/callbackok/%dibs_transaction_hash'] = array(

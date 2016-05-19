@@ -11,8 +11,12 @@ flexwindow:
   decorator: 'default'
   voucher: false
 mobilewindow:
-  paytypes: []
+  payment_types: []
 callbacks:
-  accepturl: ''
-  cancelurl: ''
+  accept_url: ''
+  cancel_url: ''
   callback: ''
+advanced:
+  calculate_fee: false
+  capture_now: false
+  unique_order_id: true
