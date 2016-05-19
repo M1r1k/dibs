@@ -4,6 +4,8 @@
  * Install file for DIBS.
  */
 
+// @todo implement system requirements.
+
 /**
  * Implementation of hook_install().
  */
