@@ -34,6 +34,7 @@ use Drupal\user\UserInterface;
  *       "html" = "Drupal\dibs\DibsTransactionHtmlRouteProvider",
  *     },
  *   },
+ *   admin_permission = "administer dibs transactions",
  *   base_table = "dibs_transactions",
  *   entity_keys = {
  *     "id" = "id",
@@ -54,9 +55,11 @@ class DibsTransaction extends ContentEntityBase implements DibsTransactionInterf
   /**
    * {@inheritdoc}
    */
-  public static function preCreate(EntityStorageInterface $storage, array &$values) {
-    $private_key = \Drupal::service('private_key')->get();
-    $values['hash'] = sha1(microtime() . $values['order_id'] . $private_key);
+  public function preSave(EntityStorageInterface $storage) {
+    if ($this->get('hash')) {
+      $private_key = \Drupal::service('private_key')->get();
+      $this->set('hash', sha1(microtime() . $this->get('order_id') . $private_key));
+    }
   }
 
   /**
@@ -132,6 +135,7 @@ class DibsTransaction extends ContentEntityBase implements DibsTransactionInterf
     $fields['billing_postal_place'] = BaseFieldDefinition::create('string')
       ->setLabel(t('The customers billing postal place(city or town)'));
     $fields['retry_count'] = BaseFieldDefinition::create('integer')
+      ->setDefaultValue(0)
       ->setLabel(t('Payment retry count'));
     $fields['lang'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Language implementation for transaction'));

@@ -7,35 +7,6 @@
 // @todo implement system requirements.
 
 /**
- * Implementation of hook_install().
- */
-function dibs_install() {
-  // Create tables.
-
-  // Inserting default order id setting
-//  $db_id = db_insert('dibs_order_id_settings')
-//    ->fields(array(
-//      'api_module' => 'dibs',
-//      'api_delta' => 'dibs',
-//      'order_id' => 10000,
-//      'order_id_prefix' => '',
-//      'order_id_suffix' => '',
-//    ))
-//    ->execute();
-}
-//
-///**
-// * Implementation of hook_uninstall().
-// */
-//function dibs_uninstall() {
-//  // Delete menu links.
-//  $deleted = db_delete('menu_links')
-//    ->condition('module', 'dibs')
-//    ->execute();
-//  menu_cache_clear_all();
-//}
-
-/**
  * Implementation of hook_schema().
  */
 function dibs_schema() {
@@ -77,6 +48,11 @@ function dibs_schema() {
       'currency' => array(
         'type' => 'varchar',
         'length' => 3,
+        'description' => t('The customers phone'),
+      ),
+      'retry_count' => array(
+        'type' => 'int',
+        'size' => 'small',
         'description' => t('The customers phone'),
       ),
       'email' => array(
