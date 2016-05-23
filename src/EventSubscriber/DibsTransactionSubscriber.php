@@ -15,12 +15,16 @@ class DibsTransactionSubscriber implements EventSubscriberInterface {
     $event->getTransaction()->set('status', 'ACCEPTED')->save();
   }
 
+  public function approveTransaction(AcceptTransactionEvent $event) {
+    $event->getTransaction()->set('status', 'APPROVED')->save();
+  }
+
   /**
    * {@inheritdoc}
    */
   public static function getSubscribedEvents() {
     $events[DibsEvents::ACCEPT_TRANSACTION] = 'acceptTransaction';
-    $events[DibsEvents::CANCEL_TRANSACTION] = 'cancelTransaction';
+//    $events[DibsEvents::CANCEL_TRANSACTION] = 'cancelTransaction';
     $events[DibsEvents::APPROVE_TRANSACTION] = 'approveTransaction';
 
     return $events;

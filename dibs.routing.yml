@@ -16,14 +16,6 @@ dibs.dibs_pages_controller_accept:
   requirements:
     _permission: 'access content'
 
-dibs.dibs_pages_controller_decline:
-  path: '/payment/dibs/decline/{transaction_hash}'
-  defaults:
-    _controller: '\Drupal\dibs\Controller\DibsPagesController::decline'
-    _title: 'Decline payment'
-  requirements:
-    _permission: 'access content'
-
 dibs.dibs_pages_controller_cancel:
   path: '/payment/dibs/cancel/{transaction_hash}'
   defaults:

@@ -56,9 +56,9 @@ class DibsTransaction extends ContentEntityBase implements DibsTransactionInterf
    * {@inheritdoc}
    */
   public function preSave(EntityStorageInterface $storage) {
-    if ($this->get('hash')) {
+    if (!$this->get('hash')->value) {
       $private_key = \Drupal::service('private_key')->get();
-      $this->set('hash', sha1(microtime() . $this->get('order_id') . $private_key));
+      $this->set('hash', sha1(microtime() . $this->get('order_id')->value . $private_key));
     }
   }
 
@@ -110,6 +110,7 @@ class DibsTransaction extends ContentEntityBase implements DibsTransactionInterf
     $fields['hash'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Transaction HASH'));
     $fields['status'] = BaseFieldDefinition::create('string')
+      ->setDefaultValue('CREATED')
       ->setLabel(t('Transaction HASH'));
     $fields['order_id'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Order ID'));
@@ -132,6 +133,9 @@ class DibsTransaction extends ContentEntityBase implements DibsTransactionInterf
       ->setLabel(t('The customers billing last name'));
     $fields['billing_postal_code'] = BaseFieldDefinition::create('string')
       ->setLabel(t('The customers billing postal code'));
+    $fields['is_split'] = BaseFieldDefinition::create('boolean')
+      ->setDefaultValue(FALSE)
+      ->setLabel(t('Is this transaction for split payment'));
     $fields['billing_postal_place'] = BaseFieldDefinition::create('string')
       ->setLabel(t('The customers billing postal place(city or town)'));
     $fields['retry_count'] = BaseFieldDefinition::create('integer')

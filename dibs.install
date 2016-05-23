@@ -55,6 +55,11 @@ function dibs_schema() {
         'size' => 'small',
         'description' => t('The customers phone'),
       ),
+      'is_split' => array(
+        'type' => 'int',
+        'size' => 'tiny',
+        'description' => t('Is payment split'),
+      ),
       'email' => array(
         'type' => 'varchar',
         'length' => 64,

@@ -6,6 +6,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\dibs\Entity\DibsTransaction;
 use Drupal\dibs\Event\AcceptTransactionEvent;
+use Drupal\dibs\Event\ApproveTransactionEvent;
 use Drupal\dibs\Event\CancelTransactionEvent;
 use Drupal\dibs\Event\DibsEvents;
 use Drupal\dibs\Form\DibsCancelForm;
@@ -13,6 +14,8 @@ use Drupal\dibs\Form\DibsRedirectForm;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\File\Exception\AccessDeniedException;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -49,7 +52,8 @@ class DibsPagesController extends ControllerBase {
    * @return string
    *   Return Hello string.
    */
-  public function accept($transaction_hash) {
+  public function accept(Request $request, $transaction_hash) {
+    // @todo preload transaction entity before actual controller.
     $transaction = DibsTransaction::loadByHash($transaction_hash);
 
     if (!$transaction) {
@@ -57,6 +61,10 @@ class DibsPagesController extends ControllerBase {
     }
 
     $this->eventDispatcher->dispatch(DibsEvents::ACCEPT_TRANSACTION, new AcceptTransactionEvent($transaction));
+
+    if ($request->get('transact') && $this->config('dibs.settings')->get('advanced.')) {
+      $this->approvePayment($request, $transaction);
+    }
 
     return [
       '#theme' => 'dibs_accept_page',
@@ -93,25 +101,19 @@ class DibsPagesController extends ControllerBase {
    * @return string
    *   Return Hello string.
    */
-  public function callback($transaction_hash) {
+  public function callback($transaction_hash, Request $request) {
     $transaction = DibsTransaction::loadByHash($transaction_hash);
-
+    $this->getLogger('dibs')->info(json_encode($_REQUEST));
     if (!$transaction) {
       throw new NotFoundHttpException($this->t('Transaction with given hash was not found.'));
     }
 
-    if ($transaction->status->value != 'CREATED') {
-      throw new AccessDeniedException($this->t('Given transaction was already processed.'));
+    if ($transaction->status->value != 'ACCEPTED') {
+      throw new AccessDeniedException($this->t('Only accepted transaction could be approved'));
     }
+    $this->approvePayment($request, $transaction);
 
-    $this->eventDispatcher->dispatch(DibsEvents::CANCEL_TRANSACTION, new CancelTransactionEvent($transaction));
-    $form = $this->formBuilder->getForm(DibsCancelForm::class, ['transaction' => $transaction]);
-
-    return [
-      '#theme' => 'dibs_cancel_page',
-      '#transaction' => $transaction,
-      '#form' => $form,
-    ];
+    return new Response();
   }
 
   public function redirectForm($transaction_hash) {
@@ -136,6 +138,21 @@ class DibsPagesController extends ControllerBase {
         'max-age' => 0,
       ],
     ];
+  }
+
+  protected function approvePayment(Request $request, DibsTransaction $transaction) {
+    $is_split_payment = $transaction->is_split->value;
+    $auth_key = $request->get('authkey');
+    $paytype = $request->get('paytype');
+    if (!$is_split_payment) {
+      $transaction_key = $request->get('transact');
+    }
+    else{
+      // @todo support split payment.
+    }
+    $config = $this->config('dibs.settings');
+    // @todo support md5
+    $this->eventDispatcher->dispatch(DibsEvents::APPROVE_TRANSACTION, new ApproveTransactionEvent($transaction, $request));
   }
 
 }
