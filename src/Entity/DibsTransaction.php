@@ -22,7 +22,6 @@ use Drupal\user\UserInterface;
  *     "view_builder" = "Drupal\Core\Entity\EntityViewBuilder",
  *     "list_builder" = "Drupal\dibs\DibsTransactionListBuilder",
  *     "views_data" = "Drupal\dibs\Entity\DibsTransactionViewsData",
- *
  *     "form" = {
  *       "default" = "Drupal\dibs\Form\DibsTransactionForm",
  *       "add" = "Drupal\dibs\Form\DibsTransactionForm",
@@ -104,7 +103,6 @@ class DibsTransaction extends ContentEntityBase implements DibsTransactionInterf
       ->setLabel(t('ID'))
       ->setDescription(t('The ID of the Dibs transaction entity.'))
       ->setReadOnly(TRUE);
-
     $fields['amount'] = BaseFieldDefinition::create('integer')
       ->setLabel(t('Transaction total amount'));
     $fields['hash'] = BaseFieldDefinition::create('string')
@@ -114,13 +112,17 @@ class DibsTransaction extends ContentEntityBase implements DibsTransactionInterf
       ->setLabel(t('Transaction HASH'));
     $fields['order_id'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Order ID'));
+    $fields['dibs_transaction_id'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('DIBS transaction ID'));
     $fields['currency'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Currency code'))
       ->setSettings(array(
         'max_length' => 3,
         'text_processing' => 0,
       ));
-
+    $fields['is_split'] = BaseFieldDefinition::create('boolean')
+      ->setDefaultValue(FALSE)
+      ->setLabel(t('Is this transaction for split payment'));
     $fields['email'] = BaseFieldDefinition::create('email')
       ->setLabel(t('The customers email'));
     $fields['billing_address'] = BaseFieldDefinition::create('string')
@@ -133,11 +135,10 @@ class DibsTransaction extends ContentEntityBase implements DibsTransactionInterf
       ->setLabel(t('The customers billing last name'));
     $fields['billing_postal_code'] = BaseFieldDefinition::create('string')
       ->setLabel(t('The customers billing postal code'));
-    $fields['is_split'] = BaseFieldDefinition::create('boolean')
-      ->setDefaultValue(FALSE)
-      ->setLabel(t('Is this transaction for split payment'));
     $fields['billing_postal_place'] = BaseFieldDefinition::create('string')
       ->setLabel(t('The customers billing postal place(city or town)'));
+    $fields['billing_phone'] = BaseFieldDefinition::create('string')
+      ->setLabel(t('The customers phone number'));
     $fields['retry_count'] = BaseFieldDefinition::create('integer')
       ->setDefaultValue(0)
       ->setLabel(t('Payment retry count'));

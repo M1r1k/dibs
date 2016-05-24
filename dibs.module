@@ -139,13 +139,6 @@ function dibs_transaction_load($key = NULL, $op = 'tid') {
 }
 
 /**
- * Load transaction by hash.
- */
-function dibs_transaction_hash_load($key = NULL) {
-  return dibs_transaction_load($key, 'hash');
-}
-
-/**
  * Preparing the payment
  * - Creating a transaction record in the db
  * - Redirecting the user to payment redirect page
@@ -275,7 +268,7 @@ function dibs_payment_prepare($data, $redirect = TRUE) {
  * @return array $form
  */
 function dibs_create_order_line_fields($data) {
-  $form = array();
+  $form = [];
   if (is_array($data)) {
     if (is_array(current($data))) {
       $i = 0;

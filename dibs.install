@@ -4,7 +4,25 @@
  * Install file for DIBS.
  */
 
-// @todo implement system requirements.
+/**
+ * Implements hook_requirements().
+ */
+function dibs_requirements($phase) {
+  $requirements = [];
+
+  if ($phase == 'runtime') {
+    if (!\Drupal::config('dibs.settings')->get('general.merchant')) {
+      $requirements['dibs_merchant'] = [
+        'title' => t('Merchant ID is missing'),
+        'value' => '',
+        'description' => t('To make DIBS payment gateway works you have to set Marchant ID.'),
+        'severity' => REQUIREMENT_ERROR,
+      ];
+    }
+  }
+
+  return $requirements;
+}
 
 /**
  * Implementation of hook_schema().
@@ -91,6 +109,16 @@ function dibs_schema() {
         'description' => t('The customers phone'),
       ),
       'billing_last_name' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'description' => t('The customers phone'),
+      ],
+      'payment_transaction_type' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'description' => t('The customers phone'),
+      ],
+      'billing_phone' => [
         'type' => 'varchar',
         'length' => 64,
         'description' => t('The customers phone'),
