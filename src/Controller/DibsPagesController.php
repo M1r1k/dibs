@@ -62,7 +62,7 @@ class DibsPagesController extends ControllerBase {
 
     $this->eventDispatcher->dispatch(DibsEvents::ACCEPT_TRANSACTION, new AcceptTransactionEvent($transaction));
 
-    if ($request->get('transact') && $this->config('dibs.settings')->get('advanced.')) {
+    if ($request->get('transact') && $this->config('dibs.settings')->get('advanced.capture_now')) {
       $this->approvePayment($request, $transaction);
     }
 
@@ -81,7 +81,7 @@ class DibsPagesController extends ControllerBase {
    * @return string
    *   Return Hello string.
    */
-  public function cancel($transaction_hash, Request $request) {
+  public function cancel(Request $request, $transaction_hash) {
     // @todo preload transaction entity before actual controller.
     $transaction = DibsTransaction::loadByHash($transaction_hash);
 
@@ -106,7 +106,7 @@ class DibsPagesController extends ControllerBase {
    * @return string
    *   Return Hello string.
    */
-  public function callback($transaction_hash, Request $request) {
+  public function callback(Request $request, $transaction_hash) {
     $transaction = DibsTransaction::loadByHash($transaction_hash);
     $this->getLogger('dibs')->info(json_encode($_REQUEST));
     if (!$transaction) {

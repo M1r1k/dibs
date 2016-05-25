@@ -45,11 +45,15 @@ dibs.settings:
           type: string
           label: 'Payment window decorator'
         voucher:
-          type: string
+          type: boolean
           label: 'Use voucher'
-    mobile_window:
-      type: sequence:
+    mobilewindow:
+      type: mapping
       label: 'Mobile'
+      mapping:
+        payment_types:
+          type: sequence
+          label: Mobile types
     callbacks:
       type: mapping
       label: 'DIBS redirect and callback urls'
