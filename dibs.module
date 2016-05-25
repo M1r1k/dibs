@@ -18,7 +18,8 @@ function dibs_theme() {
   ];
   $themes['dibs_cancel_page'] = [
     'variables' => [
-      'transaction' => NULL
+      'transaction' => NULL,
+      'form' => NULL
     ],
   ];
   $themes['dibs_accept_page'] = array(

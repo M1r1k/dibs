@@ -69,30 +69,35 @@ class DibsPagesController extends ControllerBase {
     return [
       '#theme' => 'dibs_accept_page',
       '#transaction' => $transaction,
+      '#cache' => [
+        'max-age' => 0,
+      ],
     ];
   }
-  /**
-   * Decline.
-   *
-   * @return string
-   *   Return Hello string.
-   */
-  public function decline($transaction_hash) {
-    return [
-      '#type' => 'markup',
-      '#markup' => $this->t('Implement method: decline with parameter(s): $transaction'),
-    ];
-  }
+
   /**
    * Cancel.
    *
    * @return string
    *   Return Hello string.
    */
-  public function cancel($transaction_hash) {
+  public function cancel($transaction_hash, Request $request) {
+    // @todo preload transaction entity before actual controller.
+    $transaction = DibsTransaction::loadByHash($transaction_hash);
+
+    if (!$transaction) {
+      throw new NotFoundHttpException($this->t('Transaction with given hash was not found.'));
+    }
+
+    $this->eventDispatcher->dispatch(DibsEvents::CANCEL_TRANSACTION, new CancelTransactionEvent($transaction));
+    $form = $this->formBuilder->getForm(DibsCancelForm::class, ['transaction' => $transaction]);
     return [
-      '#type' => 'markup',
-      '#markup' => $this->t('Implement method: cancel with parameter(s): $transaction'),
+      '#theme' => 'dibs_cancel_page',
+      '#form' => $form,
+      '#transaction' => $transaction,
+      '#cache' => [
+        'max-age' => 0,
+      ],
     ];
   }
   /**

@@ -48,6 +48,11 @@ function dibs_schema() {
         'length' => 64,
         'description' => t('The customers email'),
       ),
+      'dibs_transaction_id' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'description' => t('The customers email'),
+      ),
       'hash' => array(
         'type' => 'varchar',
         'length' => 255,
